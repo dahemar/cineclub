@@ -1,0 +1,156 @@
+/* ==== BASE ==== */
+h1 {
+    font-style: italic;
+    text-decoration: underline;
+}
+
+header {
+    position: relative;
+    display: block;
+    margin: 40px auto 0;
+    padding: 40px 20px 0;
+    max-width: 1200px;
+}
+
+/* ==== LAYOUT PRINCIPAL ==== */
+.container {
+    display: flex;
+    gap: 60px;
+    margin: 40px auto 0;
+    padding: 100px 20px 0;
+    max-width: 1200px;
+}
+
+.col-left {
+    flex: 3;
+}
+
+.col-right {
+    flex: 1;
+}
+
+/* ==== SESSÕES ==== */
+.session {
+    max-width: 700px;
+    padding-bottom: 50px;      
+    margin-bottom: 60px;       
+    border-bottom: 1px solid #000000;  
+}
+
+
+.session .filme {
+    margin: 1px 0 20px;
+}
+
+.session p {
+    margin: 10px 0;
+}
+
+.session .descricao {
+    margin: 10px 0;
+}
+
+.session .descricao p {
+    margin: 15px 0;
+}
+
+.session .descricao p:first-child {
+    margin-top: 0;
+}
+
+.session .descricao p:last-child {
+    margin-bottom: 0;
+}
+
+.imagem-sessao {
+    display: flex;
+    gap: 10px;
+}
+
+.movie-img {
+    display: block;
+    max-width: 800px;
+    width: 100%;
+    height: auto;
+    padding-top: 10px;
+    object-fit: cover;
+}
+
+.session-num {
+    text-decoration: underline;
+}
+
+/* ==== SIDEBAR ==== */
+button {
+    background-color: pink;
+}
+
+.descrip-sidebar img {
+    max-width: 90px;
+}
+
+.contacto p {
+    margin: 10px 0;
+}
+
+/* ==== SUCCESS PAGE ==== */
+.success-message {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.success-message h2 {
+    font-style: italic;
+}
+
+.back-link {
+    display: inline-block;
+    text-decoration: underline;
+    color: blue;
+}
+
+.img-logo-success {
+    display: block;
+    max-width: 90px;
+    width: 100%;
+    height: auto;
+    padding-top: 10px;
+    object-fit: cover;
+    margin: 0 auto;
+}
+
+/* ==== MOBILE ==== */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        gap: 40px;
+        padding-top: 60px;
+        margin: 20px auto 0;
+    }
+
+    .col-left {
+        flex: none;
+        width: 100%;
+        order: 1;
+    }
+
+    .col-right {
+        flex: none;
+        width: 100%;
+        order: 2;
+        padding-bottom: 60px;
+    }
+
+    .imagem-sessao {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .movie-img {
+        max-width: 100%;
+    }
+
+    header {
+        margin: 60px auto 20px;
+    }
+}

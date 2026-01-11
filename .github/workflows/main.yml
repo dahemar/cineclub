@@ -1,0 +1,27 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # change to 'master' if your default branch is master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Check out your repository
+      - uses: actions/checkout@v3
+
+      # 2️⃣ Configure Pages
+      - uses: actions/configure-pages@v3
+
+      # 3️⃣ Upload your static site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: .   # entire repo root
+
+      # 4️⃣ Deploy to GitHub Pages
+      - name: Deploy to Pages
+        uses: actions/deploy-pages@v1

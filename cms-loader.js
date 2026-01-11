@@ -1,0 +1,163 @@
+// Cargador de datos del CMS para 1cineclube
+
+const { API_URL, SITE_ID } = CMS_CONFIG;
+
+// Función para obtener secciones
+async function getSections() {
+  try {
+    const response = await fetch(`${API_URL}/sections?siteId=${SITE_ID}&limit=200`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error loading sections:', error);
+    return [];
+  }
+}
+
+// Función para obtener posts de una sección
+async function getPosts(sectionId) {
+  try {
+    const response = await fetch(`${API_URL}/posts?sectionId=${sectionId}&siteId=${SITE_ID}&page=1&limit=1000`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return data.posts || [];
+  } catch (error) {
+    console.error('Error loading posts:', error);
+    return [];
+  }
+}
+
+// Función para obtener el contenido de un bloque por tipo
+function getBlockContent(blocks, type) {
+  if (!Array.isArray(blocks)) return null;
+  const block = blocks.find(b => b?.type === type);
+  return block?.content || null;
+}
+
+// Función para obtener todos los bloques de un tipo
+function getBlocksByType(blocks, type) {
+  if (!Array.isArray(blocks)) return [];
+  return blocks.filter(b => b?.type === type);
+}
+
+// Función para renderizar el título formateado
+function renderFormattedTitle(post) {
+  // Usar directamente el título HTML del CMS
+  let title = post.title || '';
+  
+  // Quill guarda los saltos de línea como </p><p>, necesitamos convertirlos a <br>
+  // Primero, convertir </p><p> en <br> (salto de línea normal)
+  title = title.replace(/<\/p>\s*<p>/gi, '<br>');
+  
+  // Eliminar los <p> tags envolventes (al inicio y final)
+  title = title.replace(/^<p>/, '').replace(/<\/p>$/g, '');
+  
+  return title;
+}
+
+// Función para renderizar una sesión
+function renderSession(post, index) {
+  // Renderizar título formateado
+  const formattedTitle = renderFormattedTitle(post);
+  
+  // Buscar bloques de texto - el primero puede ser el horario, el segundo la descripción
+  const textBlocks = getBlocksByType(post.blocks, 'text');
+  const horarioText = textBlocks[0]?.content || post.metadata?.horario || '';
+  const description = textBlocks[1]?.content || textBlocks[0]?.content || post.content || '';
+  
+  // Buscar imágenes
+  const images = getBlocksByType(post.blocks, 'image');
+  
+  // Extraer número de sesión del order o del índice
+  const sessionNum = post.order !== undefined && post.order >= 0 ? `Sessão ${post.order + 1}` : `Sessão ${index + 1}`;
+  
+  return `
+    <section class="session">
+      <p class="session-num">${sessionNum}</p>
+      ${horarioText ? `<p class="horario">${horarioText}</p>` : ''}
+      
+      <h2 class="filme">${formattedTitle}</h2>
+      
+      ${description ? `<div class="descricao">${description}</div>` : ''}
+      
+      ${images.length > 0 ? `
+        <div class="imagem-sessao">
+          ${images.map(img => `
+            <img src="${img.content}" alt="${img.metadata?.alt || post.title}" class="movie-img">
+          `).join('')}
+        </div>
+      ` : ''}
+    </section>
+  `;
+}
+
+// Función principal para cargar y renderizar sesiones
+async function loadSessions() {
+  try {
+    console.log('Loading sessions from CMS...');
+    
+    // Obtener secciones
+    const sections = await getSections();
+    console.log('Sections loaded:', sections);
+    
+    // Buscar la sección de sesiones (podría llamarse "sessoes" o "sessions")
+    const sessoesSection = sections.find(s => 
+      s.slug === 'sessoes' || 
+      s.slug === 'sessions' || 
+      s.slug === 'sessões' ||
+      s.name?.toLowerCase().includes('sess')
+    );
+    
+    if (!sessoesSection) {
+      console.warn('No section found for sessions. Available sections:', sections.map(s => s.slug));
+      // Si no hay sección, mostrar mensaje o usar fallback
+      document.querySelector('.col-left').innerHTML = `
+        <p>Nenhuma sessão encontrada. Por favor, crie uma seção chamada "sessoes" no CMS.</p>
+        <p>Seções disponíveis: ${sections.map(s => s.slug).join(', ')}</p>
+      `;
+      return;
+    }
+    
+    // Obtener posts de la sección
+    const posts = await getPosts(sessoesSection.id);
+    console.log('Posts loaded:', posts);
+    
+    // Ordenar por order descendente - order mayor primero (Sessão 2 antes que Sessão 1)
+    const sortedPosts = posts.sort((a, b) => {
+      // Si ambos tienen order, ordenar descendente (1, 0...) para que Sessão 2 aparezca primero
+      if (a.order !== undefined && b.order !== undefined) {
+        return b.order - a.order; // Invertido: mayor order primero
+      }
+      // Si solo uno tiene order, el que tiene order va primero
+      if (a.order !== undefined) return -1;
+      if (b.order !== undefined) return 1;
+      // Si ninguno tiene order, ordenar por fecha (más reciente primero)
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    
+    // Renderizar sesiones
+    const sessionsHTML = sortedPosts.map((post, index) => renderSession(post, index)).join('');
+    
+    // Insertar en el contenedor
+    const colLeft = document.querySelector('.col-left');
+    if (colLeft) {
+      colLeft.innerHTML = sessionsHTML;
+    }
+    
+    console.log('Sessions rendered successfully');
+  } catch (error) {
+    console.error('Error loading sessions:', error);
+    document.querySelector('.col-left').innerHTML = `
+      <p>Erro ao carregar sessões do CMS. Verifique a conexão.</p>
+      <p>Erro: ${error.message}</p>
+    `;
+  }
+}
+
+// Cargar sesiones cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadSessions);
+} else {
+  loadSessions();
+}
+

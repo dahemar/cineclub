@@ -5,7 +5,13 @@ const { API_URL, SITE_ID } = CMS_CONFIG;
 // Función para obtener secciones
 async function getSections() {
   try {
-    const response = await fetch(`${API_URL}/sections?siteId=${SITE_ID}&limit=200`);
+    const response = await fetch(`${API_URL}/sections?siteId=${SITE_ID}&limit=200`, {
+      credentials: 'include',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } catch (error) {

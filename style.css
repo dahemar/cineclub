@@ -19,6 +19,7 @@ header {
     margin: 40px auto 0;
     padding: 100px 20px 0;
     max-width: 1200px;
+    overflow: visible;
 }
 
 .col-left {
@@ -74,8 +75,12 @@ header {
     flex-wrap: nowrap;
     align-items: stretch;
     /* Make the image row full-bleed (occupy viewport width) */
+    position: relative;
     width: 100vw;
-    margin-left: calc(50% - 50vw);
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
     gap: 0;
 }
 .imagem-sessao.multiple img {

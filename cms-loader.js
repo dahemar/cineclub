@@ -8,6 +8,7 @@ async function getSections() {
     const response = await fetch(`${API_URL}/sections?siteId=${SITE_ID}&limit=200`, {
       credentials: 'include',
       mode: 'cors',
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
       }
@@ -26,6 +27,7 @@ async function getPosts(sectionId) {
     const response = await fetch(`${API_URL}/posts?sectionId=${sectionId}&siteId=${SITE_ID}&page=1&limit=1000`, {
       credentials: 'include',
       mode: 'cors',
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
       }
@@ -50,6 +52,32 @@ function getBlockContent(blocks, type) {
 function getBlocksByType(blocks, type) {
   if (!Array.isArray(blocks)) return [];
   return blocks.filter(b => b?.type === type);
+}
+
+// Helpers para optimizar imágenes de Supabase (si aplica)
+function isSupabasePublicUrl(url) {
+  return typeof url === 'string' && url.includes('/storage/v1/object/public/');
+}
+
+function buildSupabaseTransformUrl(url, params) {
+  if (!isSupabasePublicUrl(url)) return url;
+  const base = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+  const hasQuery = base.includes('?');
+  const query = new URLSearchParams(params).toString();
+  return `${base}${hasQuery ? '&' : '?'}${query}`;
+}
+
+function buildOptimizedImageAttrs(url) {
+  if (!isSupabasePublicUrl(url)) {
+    return { src: url, srcset: '', sizes: '' };
+  }
+  const widths = [480, 768, 1024, 1440];
+  const srcset = widths
+    .map((w) => `${buildSupabaseTransformUrl(url, { width: w, quality: 70, format: 'webp' })} ${w}w`)
+    .join(', ');
+  const src = buildSupabaseTransformUrl(url, { width: 1024, quality: 70, format: 'webp' });
+  const sizes = '(max-width: 768px) 100vw, 800px';
+  return { src, srcset, sizes };
 }
 
 // Función para renderizar el título formateado
@@ -94,9 +122,16 @@ function renderSession(post, index) {
       
       ${images.length > 0 ? `
         <div class="imagem-sessao">
-          ${images.map(img => `
-            <img src="${img.content}" alt="${img.metadata?.alt || post.title}" class="movie-img">
-          `).join('')}
+          ${images.map((img, imgIndex) => {
+            const attrs = buildOptimizedImageAttrs(img.content);
+            const isFirstImage = index === 0 && imgIndex === 0;
+            const loadingAttr = isFirstImage ? 'eager' : 'lazy';
+            const priorityAttr = isFirstImage ? 'high' : 'auto';
+            const srcsetAttr = attrs.srcset ? `srcset="${attrs.srcset}" sizes="${attrs.sizes}"` : '';
+            return `
+              <img src="${attrs.src}" ${srcsetAttr} alt="${img.metadata?.alt || post.title}" class="movie-img" loading="${loadingAttr}" decoding="async" fetchpriority="${priorityAttr}">
+            `;
+          }).join('')}
         </div>
       ` : ''}
     </section>

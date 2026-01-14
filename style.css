@@ -35,6 +35,8 @@ header {
     padding-bottom: 50px;      
     margin-bottom: 60px;       
     border-bottom: 1px solid #000000;  
+    content-visibility: auto;
+    contain-intrinsic-size: 1000px;
 }
 
 

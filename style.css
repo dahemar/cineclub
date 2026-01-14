@@ -87,7 +87,8 @@ header {
     width: 50vw; /* each image takes half the viewport */
     max-width: 50vw;
     flex: 0 0 50vw;
-    object-fit: cover;
+    height: auto;
+    object-fit: initial; /* preserve full image instead of cropping */
     display: block;
 }
 

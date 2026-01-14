@@ -120,8 +120,10 @@ function renderSession(post, index) {
       
       ${description ? `<div class="descricao">${description}</div>` : ''}
       
-      ${images.length > 0 ? `
-        <div class="imagem-sessao">
+      ${images.length > 0 ? (() => {
+        const wrapperClass = images.length > 1 ? 'imagem-sessao multiple' : 'imagem-sessao single';
+        return `
+        <div class="${wrapperClass}">
           ${images.map((img, imgIndex) => {
             const attrs = buildOptimizedImageAttrs(img.content);
             const isFirstImage = index === 0 && imgIndex === 0;
@@ -133,7 +135,8 @@ function renderSession(post, index) {
             `;
           }).join('')}
         </div>
-      ` : ''}
+      `;
+      })() : ''}
     </section>
   `;
 }

@@ -69,6 +69,22 @@ header {
     gap: 10px;
 }
 
+/* When there are multiple images, show them side-by-side with a max of two columns */
+.imagem-sessao.multiple {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+.imagem-sessao.multiple img {
+    width: calc(50% - 5px);
+    max-width: calc(50% - 5px);
+}
+
+/* Single image should take full width */
+.imagem-sessao.single img {
+    width: 100%;
+    max-width: 100%;
+}
+
 .movie-img {
     display: block;
     max-width: 800px;

@@ -71,12 +71,19 @@ header {
 
 /* When there are multiple images, show them side-by-side with a max of two columns */
 .imagem-sessao.multiple {
-    flex-wrap: wrap;
-    align-items: flex-start;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    /* Make the image row full-bleed (occupy viewport width) */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    gap: 0;
 }
 .imagem-sessao.multiple img {
-    width: calc(50% - 5px);
-    max-width: calc(50% - 5px);
+    width: 50vw; /* each image takes half the viewport */
+    max-width: 50vw;
+    flex: 0 0 50vw;
+    object-fit: cover;
+    display: block;
 }
 
 /* Single image should take full width */
@@ -166,6 +173,19 @@ button {
 
     .movie-img {
         max-width: 100%;
+    }
+
+    /* On small screens, stack full-bleed images vertically */
+    .imagem-sessao.multiple {
+        width: 100%;
+        margin-left: 0;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .imagem-sessao.multiple img {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
     }
 
     header {

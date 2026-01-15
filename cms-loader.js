@@ -131,8 +131,10 @@ function renderSession(post, index) {
                 const loadingAttr = isFirstImage ? 'eager' : 'lazy';
                 const priorityAttr = isFirstImage ? 'high' : 'auto';
                 const srcsetAttr = attrs.srcset ? `srcset="${attrs.srcset}" sizes="${attrs.sizes}"` : '';
+                // include original content URL as data-orig-src so we can compute natural size later
+                const dataOrig = img.content;
                 return `
-                  <img src="${attrs.src}" ${srcsetAttr} alt="${img.metadata?.alt || post.title}" class="movie-img" loading="${loadingAttr}" decoding="async" fetchpriority="${priorityAttr}">
+                  <img src="${attrs.src}" ${srcsetAttr} data-orig-src="${dataOrig}" alt="${img.metadata?.alt || post.title}" class="movie-img" loading="${loadingAttr}" decoding="async" fetchpriority="${priorityAttr}">
                 `;
               }).join('')}
             </div>
@@ -194,6 +196,39 @@ async function loadSessions() {
     const colLeft = document.querySelector('.col-left');
     if (colLeft) {
       colLeft.innerHTML = sessionsHTML;
+    }
+  
+    // After rendering, for any full-bleed two-image containers compute aspect ratio from original image
+    try {
+      document.querySelectorAll('.imagem-sessao--two').forEach((container) => {
+        // if already fullbleed, skip (we will set fullbleed when appropriate)
+        const imgs = Array.from(container.querySelectorAll('img[data-orig-src]'));
+        if (!imgs || imgs.length === 0) return;
+        // If there are exactly two images, make full-bleed and compute aspect from first original
+        if (imgs.length === 2) {
+          const firstOrig = imgs[0].getAttribute('data-orig-src');
+          // mark container as fullbleed
+          container.classList.add('imagem-sessao--fullbleed');
+          // Load original image to compute aspect
+          const tmp = new Image();
+          tmp.onload = function() {
+            const aspect = tmp.naturalHeight / tmp.naturalWidth;
+            container.style.setProperty('--aspect', aspect.toString());
+          };
+          tmp.onerror = function() {
+            // fallback: keep default aspect
+          };
+          // resolve relative paths to absolute if needed
+          try {
+            const base = new URL(firstOrig, window.location.href).href;
+            tmp.src = base;
+          } catch (e) {
+            tmp.src = firstOrig;
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('Failed to compute full-bleed image aspect ratios', err);
     }
     
     console.log('Sessions rendered successfully');

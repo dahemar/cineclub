@@ -80,6 +80,26 @@ header {
     width: calc(50% - 5px);
 }
 
+/* Full-bleed container that spans the viewport width */
+.imagem-sessao--fullbleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.imagem-sessao--fullbleed .movie-img {
+    width: 50%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Use CSS variable --aspect (height/width) to compute desired height */
+.imagem-sessao--fullbleed {
+    height: calc(100vw * var(--aspect, 0.5625)); /* default 16:9 */
+}
+
 .movie-img {
     display: block;
     max-width: 800px;

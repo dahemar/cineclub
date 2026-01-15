@@ -25,6 +25,13 @@ header {
     flex: 3;
 }
 
+/* Allow overflow from left column so images can overflow to the right */
+.col-left {
+    overflow: visible;
+    position: relative;
+    z-index: 2;
+}
+
 .col-right {
     flex: 1;
 }
@@ -37,6 +44,13 @@ header {
     border-bottom: 1px solid #000000;  
     content-visibility: auto;
     contain-intrinsic-size: 1000px;
+}
+
+/* Ensure session stacking context allows images to appear above neighboring elements */
+.session {
+    position: relative;
+    z-index: 3;
+    overflow: visible;
 }
 
 
@@ -84,6 +98,15 @@ header {
     height: 100%;
     object-fit: cover;
     max-width: none;
+}
+
+/* Ensure images are painted above other elements and the later image stacks on top */
+.imagem-sessao .movie-img {
+    position: relative;
+    z-index: 2;
+}
+.imagem-sessao .movie-img:last-child {
+    z-index: 4;
 }
 
 /* Full-bleed container that spans the viewport width */

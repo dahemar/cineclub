@@ -115,6 +115,23 @@ header {
     z-index: 2147483648;
 }
 
+/* Height-match mode using CSS variable set from JS */
+.imagem-sessao--two-hmatch {
+    position: relative;
+    overflow: visible;
+}
+.imagem-sessao--two-hmatch .movie-img:first-child {
+    display: block;
+}
+.imagem-sessao--two-hmatch .movie-img:last-child {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 10px);
+    height: var(--hmatch);
+    width: auto;
+    object-fit: cover;
+}
+
 /* Ensure images are painted above other elements and the later image stacks on top */
 .imagem-sessao .movie-img {
     position: relative;

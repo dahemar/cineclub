@@ -177,6 +177,33 @@ async function loadSessions() {
       colLeft.innerHTML = sessionsHTML;
     }
     
+      // After rendering, match heights for two-image layouts and offset 10px
+      try {
+        const containers = document.querySelectorAll('.imagem-sessao.imagem-sessao--two');
+        containers.forEach(container => {
+          const imgs = container.querySelectorAll('img.movie-img');
+          if (imgs.length !== 2) return;
+          const [img1, img2] = imgs;
+
+          function applyHeightMatch() {
+            // Ensure first image has computed height
+            const h = img1.clientHeight || img1.naturalHeight || 0;
+            if (h > 0) {
+              container.style.setProperty('--hmatch', h + 'px');
+              container.classList.add('imagem-sessao--two-hmatch');
+            }
+          }
+
+          if (img1.complete && img1.naturalHeight > 0) {
+            requestAnimationFrame(applyHeightMatch);
+          } else {
+            img1.addEventListener('load', () => requestAnimationFrame(applyHeightMatch), { once: true });
+          }
+        });
+      } catch (err) {
+        console.warn('height-match logic failed', err);
+      }
+
     console.log('Sessions rendered successfully');
   } catch (error) {
     console.error('Error loading sessions:', error);

@@ -105,7 +105,7 @@ function renderSession(post, index) {
   const horarioText = textBlocks[0]?.content || post.metadata?.horario || '';
   const description = textBlocks[1]?.content || textBlocks[0]?.content || post.content || '';
   
-  // Buscar imágenes
+  // Buscar imágenes (ignoramos metadata.width en este frontend)
   const images = getBlocksByType(post.blocks, 'image');
   
   // Extraer número de sesión del order o del índice
@@ -121,18 +121,23 @@ function renderSession(post, index) {
       ${description ? `<div class="descricao">${description}</div>` : ''}
       
       ${images.length > 0 ? `
-        <div class="imagem-sessao">
-          ${images.map((img, imgIndex) => {
-            const attrs = buildOptimizedImageAttrs(img.content);
-            const isFirstImage = index === 0 && imgIndex === 0;
-            const loadingAttr = isFirstImage ? 'eager' : 'lazy';
-            const priorityAttr = isFirstImage ? 'high' : 'auto';
-            const srcsetAttr = attrs.srcset ? `srcset="${attrs.srcset}" sizes="${attrs.sizes}"` : '';
-            return `
-              <img src="${attrs.src}" ${srcsetAttr} alt="${img.metadata?.alt || post.title}" class="movie-img" loading="${loadingAttr}" decoding="async" fetchpriority="${priorityAttr}">
-            `;
-          }).join('')}
-        </div>
+        ${(() => {
+          const containerClass = images.length === 2 ? 'imagem-sessao imagem-sessao--two' : 'imagem-sessao';
+          return `
+            <div class="${containerClass}">
+              ${images.map((img, imgIndex) => {
+                const attrs = buildOptimizedImageAttrs(img.content);
+                const isFirstImage = index === 0 && imgIndex === 0;
+                const loadingAttr = isFirstImage ? 'eager' : 'lazy';
+                const priorityAttr = isFirstImage ? 'high' : 'auto';
+                const srcsetAttr = attrs.srcset ? `srcset="${attrs.srcset}" sizes="${attrs.sizes}"` : '';
+                return `
+                  <img src="${attrs.src}" ${srcsetAttr} alt="${img.metadata?.alt || post.title}" class="movie-img" loading="${loadingAttr}" decoding="async" fetchpriority="${priorityAttr}">
+                `;
+              }).join('')}
+            </div>
+          `;
+        })()}
       ` : ''}
     </section>
   `;

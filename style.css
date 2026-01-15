@@ -66,8 +66,18 @@ header {
 
 .imagem-sessao {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 10px;
+    align-items: flex-start;
+}
+
+.imagem-sessao--two {
+    /* When there are exactly two images, show them side-by-side */
+    gap: 10px;
+}
+
+.imagem-sessao--two .movie-img {
+    width: calc(50% - 5px);
 }
 
 .movie-img {
@@ -145,7 +155,7 @@ button {
     }
 
     .imagem-sessao {
-        /* On small screens keep column layout */
+        /* On small screens stack images vertically */
         flex-direction: column;
         gap: 20px;
     }

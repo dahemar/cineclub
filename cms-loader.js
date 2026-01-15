@@ -101,7 +101,8 @@ function renderSession(post, index) {
   const sessionNum = post.order !== undefined && post.order >= 0 ? `Sessão ${post.order + 1}` : `Sessão ${index + 1}`;
   
   // Usar la clase original del contenedor de imágenes (layout previo)
-  const imgContainerClass = 'imagem-sessao';
+  // Si hay exactamente dos imágenes, añadir clase para layout lado-a-lado
+  const imgContainerClass = images.length === 2 ? 'imagem-sessao imagem-sessao--two' : 'imagem-sessao';
 
   return `
     <section class="session">

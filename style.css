@@ -71,13 +71,16 @@ header {
     align-items: flex-start;
 }
 
+/* Two-image layout: show images side-by-side with 10px gap and equal height */
 .imagem-sessao--two {
-    /* When there are exactly two images, show them side-by-side */
     gap: 10px;
+    align-items: stretch;
 }
 
 .imagem-sessao--two .movie-img {
     width: calc(50% - 5px);
+    height: 100%;
+    object-fit: cover;
 }
 
 /* Full-bleed container that spans the viewport width */

@@ -100,6 +100,14 @@ function renderSession(post, index) {
   // Extraer número de sesión del order o del índice
   const sessionNum = post.order !== undefined && post.order >= 0 ? `Sessão ${post.order + 1}` : `Sessão ${index + 1}`;
   
+  // Determinar clase del contenedor de imágenes según número de imágenes
+  const imgContainerClass = images.length === 2
+    ? 'imagem-sessao imagem-sessao--two'
+    : (images.length > 2 ? 'imagem-sessao imagem-sessao--fullbleed' : 'imagem-sessao');
+
+  // Log clase para depuración
+  try { console.log('[renderSession] post', post.id, 'imgContainerClass', imgContainerClass); } catch(e){}
+
   return `
     <section class="session">
       <p class="session-num">${sessionNum}</p>
@@ -110,7 +118,7 @@ function renderSession(post, index) {
       ${description ? `<div class="descricao">${description}</div>` : ''}
       
       ${images.length > 0 ? `
-        <div class="imagem-sessao">
+        <div class="${imgContainerClass}">
           ${images.map(img => `
             <img src="${resolveMediaUrl(img.content)}" alt="${img.metadata?.alt || post.title}" class="movie-img" onload="console.log('image loaded','${resolveMediaUrl(img.content)}', ${post.id})" onerror="console.error('image failed','${resolveMediaUrl(img.content)}', ${post.id})">
           `).join('')}

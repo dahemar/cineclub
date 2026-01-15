@@ -39,3 +39,4 @@ Este proyecto está configurado para desplegarse automáticamente en Vercel cuan
 - `Images/` - Imágenes estáticas
 - `vercel.json` - Configuración de Vercel
 
+

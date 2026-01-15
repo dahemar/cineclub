@@ -29,7 +29,8 @@ header {
 .col-left {
     overflow: visible;
     position: relative;
-    z-index: 2;
+    /* bring left column above typical page elements */
+    z-index: 2147483646;
 }
 
 .col-right {
@@ -49,7 +50,8 @@ header {
 /* Ensure session stacking context allows images to appear above neighboring elements */
 .session {
     position: relative;
-    z-index: 3;
+    /* ensure session creates a stacking context above overlays */
+    z-index: 2147483647;
     overflow: visible;
 }
 
@@ -94,8 +96,12 @@ header {
 }
 
 .imagem-sessao--two .movie-img {
+    /* Use auto height (not 100%) so images keep their intrinsic aspect
+       ratio; limit the displayed height so both images remain visible */
     flex: 0 0 calc(50% - 5px);
-    height: 100%;
+    height: auto;
+    max-height: 420px;
+    width: auto;
     object-fit: cover;
     max-width: none;
 }
@@ -110,11 +116,24 @@ header {
 }
 
 /* Ocultar overlays de desarrollo que pueden tapar contenido (Vercel live feedback, extensiones) */
+/* Hide known dev / extension overlays that can occlude page content during testing */
 vercel-live-feedback,
 .give-freely-root,
-[data-extension-name="CSS Peeper"] {
+[data-extension-name="CSS Peeper"],
+plasmo-csui,
+#plasmo-inspector,
+[id^="plasmo-"],
+[id^="plasmo"] {
     display: none !important;
     pointer-events: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* As a fallback ensure the second image stacks above almost everything */
+.imagem-sessao .movie-img:last-child {
+    position: relative;
+    z-index: 2147483648; /* keep extremely high to surface over overlays */
 }
 
 /* Garantizar la segunda imagen por encima en caso de overlays menores */

@@ -1,4 +1,4 @@
-// Configuración del CMS (detección mejorada para entornos locales y HTTPS)
+// Configuración del CMS (detección mejorada para entornos locales y producción)
 const isHttps = window.location.protocol === 'https:';
 
 function isPrivateIp(host) {
@@ -15,20 +15,18 @@ function isPrivateIp(host) {
 function isLocalDevHost(host) {
   if (!host) return false;
   if (host === 'localhost' || host === '127.0.0.1') return true;
-  if (host.endsWith('.local') || host.endsWith('.local.test')) return true;
+  if (host.endsWith('.local') || host.includes('.local.test')) return true;
   if (isPrivateIp(host)) return true;
   return false;
 }
 
-const isLocalhost = isLocalDevHost(window.location.hostname);
-const isLocalDomain = window.location.hostname.includes('.local.test');
+const DEFAULT_PROD_API = 'https://cms-woad-delta.vercel.app';
 
 const CMS_CONFIG = {
-  // Si la página se sirve por HTTPS, usar la API HTTPS local (IP o dominio local.test).
-  // Si la página no es HTTPS, usar el backend HTTP en localhost para desarrollo simple.
-  API_URL: isLocalhost
-    ? (isHttps ? (isLocalDomain ? 'https://api.local.test:3000' : `https://${window.location.hostname}:3000`) : 'http://localhost:3000')
-    : 'https://cms-woad-delta.vercel.app',
-  SITE_ID: 3, // ID del sitio "test-frontend"
+  // Use local backend only when the frontend is running on a local/private host.
+  API_URL: isLocalDevHost(window.location.hostname)
+    ? (isHttps ? `https://${window.location.hostname}:3000` : `http://${window.location.hostname}:3000`)
+    : DEFAULT_PROD_API,
+  SITE_ID: 3,
 };
 

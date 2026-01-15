@@ -100,13 +100,8 @@ function renderSession(post, index) {
   // Extraer número de sesión del order o del índice
   const sessionNum = post.order !== undefined && post.order >= 0 ? `Sessão ${post.order + 1}` : `Sessão ${index + 1}`;
   
-  // Determinar clase del contenedor de imágenes según número de imágenes
-  const imgContainerClass = images.length === 2
-    ? 'imagem-sessao imagem-sessao--two'
-    : (images.length > 2 ? 'imagem-sessao imagem-sessao--fullbleed' : 'imagem-sessao');
-
-  // Log clase para depuración
-  try { console.log('[renderSession] post', post.id, 'imgContainerClass', imgContainerClass); } catch(e){}
+  // Usar la clase original del contenedor de imágenes (layout previo)
+  const imgContainerClass = 'imagem-sessao';
 
   return `
     <section class="session">

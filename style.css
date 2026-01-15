@@ -109,6 +109,20 @@ header {
     z-index: 4;
 }
 
+/* Ocultar overlays de desarrollo que pueden tapar contenido (Vercel live feedback, extensiones) */
+vercel-live-feedback,
+.give-freely-root,
+[data-extension-name="CSS Peeper"] {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+/* Garantizar la segunda imagen por encima en caso de overlays menores */
+.imagem-sessao .movie-img:last-child {
+    position: relative;
+    z-index: 2147483648; /* intentar superar overlays muy altos (only as fallback) */
+}
+
 /* Full-bleed container that spans the viewport width */
 .imagem-sessao--fullbleed {
     width: 100vw;

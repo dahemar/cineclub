@@ -89,6 +89,13 @@ function renderSession(post, index) {
     if (path.startsWith('/')) return `${window.location.origin}${path}`;
     return `${window.location.origin}/${path.replace(/^\/+/, '')}`;
   }
+
+  // Logear las URLs resueltas para depuración
+  try {
+    console.log('[renderSession] post', post.id, 'images', images.map(i => resolveMediaUrl(i.content)));
+  } catch (e) {
+    console.warn('[renderSession] failed to log images for post', post.id, e);
+  }
   
   // Extraer número de sesión del order o del índice
   const sessionNum = post.order !== undefined && post.order >= 0 ? `Sessão ${post.order + 1}` : `Sessão ${index + 1}`;
@@ -105,7 +112,7 @@ function renderSession(post, index) {
       ${images.length > 0 ? `
         <div class="imagem-sessao">
           ${images.map(img => `
-            <img src="${resolveMediaUrl(img.content)}" alt="${img.metadata?.alt || post.title}" class="movie-img">
+            <img src="${resolveMediaUrl(img.content)}" alt="${img.metadata?.alt || post.title}" class="movie-img" onload="console.log('image loaded','${resolveMediaUrl(img.content)}', ${post.id})" onerror="console.error('image failed','${resolveMediaUrl(img.content)}', ${post.id})">
           `).join('')}
         </div>
       ` : ''}

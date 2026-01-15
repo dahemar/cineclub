@@ -68,7 +68,9 @@ header {
     display: flex;
     flex-direction: row;
     gap: 10px;
-    align-items: flex-start;
+    align-items: stretch;
+    flex-wrap: nowrap; /* evitar que las imágenes salten a la línea siguiente */
+    overflow: visible; /* permitir que las imágenes se salgan del contenedor */
 }
 
 /* Two-image layout: show images side-by-side with 10px gap and equal height */
@@ -78,9 +80,10 @@ header {
 }
 
 .imagem-sessao--two .movie-img {
-    width: calc(50% - 5px);
+    flex: 0 0 calc(50% - 5px);
     height: 100%;
     object-fit: cover;
+    max-width: none;
 }
 
 /* Full-bleed container that spans the viewport width */

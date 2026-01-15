@@ -84,26 +84,26 @@ header {
     display: flex;
     flex-direction: row;
     gap: 10px;
-    align-items: stretch;
-    flex-wrap: nowrap; /* evitar que las imágenes salten a la línea siguiente */
-    overflow: visible; /* permitir que las imágenes se salgan del contenedor */
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    overflow: visible;
+    min-height: 200px;
 }
 
-/* Two-image layout: show images side-by-side with 10px gap and equal height */
+/* Two-image layout: show images side-by-side with 10px gap */
 .imagem-sessao--two {
     gap: 10px;
-    align-items: stretch;
+    align-items: flex-start;
 }
 
 .imagem-sessao--two .movie-img {
-    /* Use auto height (not 100%) so images keep their intrinsic aspect
-       ratio; limit the displayed height so both images remain visible */
-    flex: 0 0 calc(50% - 5px);
+    width: calc(50% - 5px);
     height: auto;
-    max-height: 420px;
-    width: auto;
+    min-width: 200px;
+    min-height: 200px;
+    max-height: 500px;
     object-fit: cover;
-    max-width: none;
+    flex-shrink: 0;
 }
 
 /* Ensure images are painted above other elements and the later image stacks on top */
@@ -167,6 +167,7 @@ plasmo-csui,
     max-width: 800px;
     width: 100%;
     height: auto;
+    min-height: 200px;
     padding-top: 10px;
     object-fit: cover;
 }

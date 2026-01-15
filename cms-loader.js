@@ -54,32 +54,6 @@ function getBlocksByType(blocks, type) {
   return blocks.filter(b => b?.type === type);
 }
 
-// Helpers para optimizar imágenes de Supabase (si aplica)
-function isSupabasePublicUrl(url) {
-  return typeof url === 'string' && url.includes('/storage/v1/object/public/');
-}
-
-function buildSupabaseTransformUrl(url, params) {
-  if (!isSupabasePublicUrl(url)) return url;
-  const base = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
-  const hasQuery = base.includes('?');
-  const query = new URLSearchParams(params).toString();
-  return `${base}${hasQuery ? '&' : '?'}${query}`;
-}
-
-function buildOptimizedImageAttrs(url) {
-  if (!isSupabasePublicUrl(url)) {
-    return { src: url, srcset: '', sizes: '' };
-  }
-  const widths = [480, 768, 1024, 1440];
-  const srcset = widths
-    .map((w) => `${buildSupabaseTransformUrl(url, { width: w, quality: 70, format: 'webp' })} ${w}w`)
-    .join(', ');
-  const src = buildSupabaseTransformUrl(url, { width: 1024, quality: 70, format: 'webp' });
-  const sizes = '(max-width: 768px) 100vw, 800px';
-  return { src, srcset, sizes };
-}
-
 // Función para renderizar el título formateado
 function renderFormattedTitle(post) {
   // Usar directamente el título HTML del CMS
@@ -105,8 +79,16 @@ function renderSession(post, index) {
   const horarioText = textBlocks[0]?.content || post.metadata?.horario || '';
   const description = textBlocks[1]?.content || textBlocks[0]?.content || post.content || '';
   
-  // Buscar imágenes (ignoramos metadata.width en este frontend)
+  // Buscar imágenes
   const images = getBlocksByType(post.blocks, 'image');
+
+  // Resolver URL de media: si la ruta es relativa, convertirla en absoluta
+  function resolveMediaUrl(path) {
+    if (!path) return '';
+    if (/^(https?:)?\/\//i.test(path)) return path; // ya es absoluta
+    if (path.startsWith('/')) return `${window.location.origin}${path}`;
+    return `${window.location.origin}/${path.replace(/^\/+/, '')}`;
+  }
   
   // Extraer número de sesión del order o del índice
   const sessionNum = post.order !== undefined && post.order >= 0 ? `Sessão ${post.order + 1}` : `Sessão ${index + 1}`;
@@ -121,25 +103,11 @@ function renderSession(post, index) {
       ${description ? `<div class="descricao">${description}</div>` : ''}
       
       ${images.length > 0 ? `
-        ${(() => {
-          const containerClass = images.length === 2 ? 'imagem-sessao imagem-sessao--two' : 'imagem-sessao';
-          return `
-            <div class="${containerClass}">
-              ${images.map((img, imgIndex) => {
-                const attrs = buildOptimizedImageAttrs(img.content);
-                const isFirstImage = index === 0 && imgIndex === 0;
-                const loadingAttr = isFirstImage ? 'eager' : 'lazy';
-                const priorityAttr = isFirstImage ? 'high' : 'auto';
-                const srcsetAttr = attrs.srcset ? `srcset="${attrs.srcset}" sizes="${attrs.sizes}"` : '';
-                // include original content URL as data-orig-src so we can compute natural size later
-                const dataOrig = img.content;
-                return `
-                  <img src="${attrs.src}" ${srcsetAttr} data-orig-src="${dataOrig}" alt="${img.metadata?.alt || post.title}" class="movie-img" loading="${loadingAttr}" decoding="async" fetchpriority="${priorityAttr}">
-                `;
-              }).join('')}
-            </div>
-          `;
-        })()}
+        <div class="imagem-sessao">
+          ${images.map(img => `
+            <img src="${resolveMediaUrl(img.content)}" alt="${img.metadata?.alt || post.title}" class="movie-img">
+          `).join('')}
+        </div>
       ` : ''}
     </section>
   `;
@@ -196,63 +164,6 @@ async function loadSessions() {
     const colLeft = document.querySelector('.col-left');
     if (colLeft) {
       colLeft.innerHTML = sessionsHTML;
-    }
-  
-    // After rendering, for any full-bleed two-image containers compute aspect ratio from original image
-    try {
-      document.querySelectorAll('.imagem-sessao--two').forEach((container) => {
-        // if already fullbleed, skip (we will set fullbleed when appropriate)
-        const imgs = Array.from(container.querySelectorAll('img[data-orig-src]'));
-        if (!imgs || imgs.length === 0) return;
-        // If there are exactly two images, make full-bleed and compute aspect from first original
-        if (imgs.length === 2) {
-          // mark container as fullbleed
-          container.classList.add('imagem-sessao--fullbleed');
-
-          // Load both original images to compute natural sizes, then compute a common height H
-          const srcs = imgs.map(i => i.getAttribute('data-orig-src'));
-          const loaders = srcs.map((s) => new Promise((resolve) => {
-            const tmp = new Image();
-            tmp.onload = () => resolve({ w: tmp.naturalWidth, h: tmp.naturalHeight, src: tmp.src });
-            tmp.onerror = () => resolve(null);
-            try {
-              tmp.src = new URL(s, window.location.href).href;
-            } catch (e) {
-              tmp.src = s;
-            }
-          }));
-
-          Promise.all(loaders).then((results) => {
-            const dims = results.filter(Boolean);
-            if (dims.length !== 2) return; // fallback: keep default behavior
-
-            // viewport width in px
-            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-
-            // For each image, naturalWidth / naturalHeight
-            const ratios = dims.map(d => (d.w / d.h));
-
-            // We want H such that sum(wi) = vw, where wi = H * (naturalWidth / naturalHeight) = H * ratio
-            const denom = ratios.reduce((s, r) => s + r, 0);
-            if (denom <= 0) return;
-
-            const H = vw / denom; // px
-
-            // Set container height and each image height to H and width auto
-            container.style.height = `${Math.round(H)}px`;
-            imgs.forEach((img) => {
-              img.style.height = `${Math.round(H)}px`;
-              img.style.width = 'auto';
-              img.style.objectFit = 'contain';
-              img.style.display = 'block';
-            });
-          }).catch(() => {
-            // ignore, keep default
-          });
-        }
-      });
-    } catch (err) {
-      console.warn('Failed to compute full-bleed image aspect ratios', err);
     }
     
     console.log('Sessions rendered successfully');

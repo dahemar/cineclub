@@ -19,7 +19,6 @@ header {
     margin: 40px auto 0;
     padding: 100px 20px 0;
     max-width: 1200px;
-    overflow: visible;
 }
 
 .col-left {
@@ -67,35 +66,8 @@ header {
 
 .imagem-sessao {
     display: flex;
+    flex-direction: column;
     gap: 10px;
-}
-
-/* When there are multiple images, show them side-by-side with a max of two columns */
-.imagem-sessao.multiple {
-    flex-wrap: nowrap;
-    align-items: stretch;
-    /* Make the image row full-bleed (occupy viewport width) */
-    position: relative;
-    width: 100vw;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
-    gap: 0;
-}
-.imagem-sessao.multiple img {
-    width: 50vw; /* each image takes half the viewport */
-    max-width: 50vw;
-    flex: 0 0 50vw;
-    height: auto;
-    object-fit: initial; /* preserve full image instead of cropping */
-    display: block;
-}
-
-/* Single image should take full width */
-.imagem-sessao.single img {
-    width: 100%;
-    max-width: 100%;
 }
 
 .movie-img {
@@ -173,25 +145,13 @@ button {
     }
 
     .imagem-sessao {
+        /* On small screens keep column layout */
         flex-direction: column;
         gap: 20px;
     }
 
     .movie-img {
         max-width: 100%;
-    }
-
-    /* On small screens, stack full-bleed images vertically */
-    .imagem-sessao.multiple {
-        width: 100%;
-        margin-left: 0;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-    .imagem-sessao.multiple img {
-        width: 100%;
-        max-width: 100%;
-        flex: 0 0 100%;
     }
 
     header {

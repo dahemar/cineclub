@@ -87,6 +87,7 @@ header {
     align-items: flex-start;
     flex-wrap: nowrap;
     overflow: visible;
+    position: relative; /* allow absolute positioning of second image */
 }
 
 /* Two-image layout: show images side-by-side with 10px gap */
@@ -95,13 +96,22 @@ header {
     align-items: flex-start;
 }
 
-.imagem-sessao--two .movie-img {
-    width: auto;
+/* First image defines the container's height */
+.imagem-sessao--two .movie-img:first-child {
+    width: 100%;
     height: auto;
-    max-width: 400px;
-    max-height: none;
-    object-fit: contain;
-    flex-shrink: 0;
+    display: block;
+}
+
+/* Second image: same height as first, 10px to the right, allowed to overflow */
+.imagem-sessao--two .movie-img:last-child {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 10px);
+    height: 100%;
+    width: auto;
+    object-fit: cover;
+    z-index: 2147483648;
 }
 
 /* Ensure images are painted above other elements and the later image stacks on top */

@@ -206,25 +206,49 @@ async function loadSessions() {
         if (!imgs || imgs.length === 0) return;
         // If there are exactly two images, make full-bleed and compute aspect from first original
         if (imgs.length === 2) {
-          const firstOrig = imgs[0].getAttribute('data-orig-src');
           // mark container as fullbleed
           container.classList.add('imagem-sessao--fullbleed');
-          // Load original image to compute aspect
-          const tmp = new Image();
-          tmp.onload = function() {
-            const aspect = tmp.naturalHeight / tmp.naturalWidth;
-            container.style.setProperty('--aspect', aspect.toString());
-          };
-          tmp.onerror = function() {
-            // fallback: keep default aspect
-          };
-          // resolve relative paths to absolute if needed
-          try {
-            const base = new URL(firstOrig, window.location.href).href;
-            tmp.src = base;
-          } catch (e) {
-            tmp.src = firstOrig;
-          }
+
+          // Load both original images to compute natural sizes, then compute a common height H
+          const srcs = imgs.map(i => i.getAttribute('data-orig-src'));
+          const loaders = srcs.map((s) => new Promise((resolve) => {
+            const tmp = new Image();
+            tmp.onload = () => resolve({ w: tmp.naturalWidth, h: tmp.naturalHeight, src: tmp.src });
+            tmp.onerror = () => resolve(null);
+            try {
+              tmp.src = new URL(s, window.location.href).href;
+            } catch (e) {
+              tmp.src = s;
+            }
+          }));
+
+          Promise.all(loaders).then((results) => {
+            const dims = results.filter(Boolean);
+            if (dims.length !== 2) return; // fallback: keep default behavior
+
+            // viewport width in px
+            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+
+            // For each image, naturalWidth / naturalHeight
+            const ratios = dims.map(d => (d.w / d.h));
+
+            // We want H such that sum(wi) = vw, where wi = H * (naturalWidth / naturalHeight) = H * ratio
+            const denom = ratios.reduce((s, r) => s + r, 0);
+            if (denom <= 0) return;
+
+            const H = vw / denom; // px
+
+            // Set container height and each image height to H and width auto
+            container.style.height = `${Math.round(H)}px`;
+            imgs.forEach((img) => {
+              img.style.height = `${Math.round(H)}px`;
+              img.style.width = 'auto';
+              img.style.objectFit = 'contain';
+              img.style.display = 'block';
+            });
+          }).catch(() => {
+            // ignore, keep default
+          });
         }
       });
     } catch (err) {

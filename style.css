@@ -94,22 +94,23 @@ header {
 .imagem-sessao--two {
     gap: 10px;
     align-items: flex-start;
+    display: flex;
+    position: relative;
 }
 
 /* First image defines the container's height */
 .imagem-sessao--two .movie-img:first-child {
-    width: 100%;
+    flex: 0 0 calc(50% - 5px);
     height: auto;
     display: block;
+    max-width: 100%;
 }
 
 /* Second image: same height as first, 10px to the right, allowed to overflow */
 .imagem-sessao--two .movie-img:last-child {
-    position: absolute;
-    top: 0;
-    left: calc(100% + 10px);
-    height: 100%;
-    width: auto;
+    flex: 0 0 calc(50% - 5px);
+    height: auto;
+    max-width: 100%;
     object-fit: cover;
     z-index: 2147483648;
 }

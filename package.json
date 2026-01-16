@@ -1,0 +1,16 @@
+{
+  "name": "1cineclube",
+  "version": "1.0.0",
+  "description": "Um cineclube em Lisboa",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "cinema",
+    "cineclube"
+  ],
+  "author": "",
+  "license": "ISC"
+}

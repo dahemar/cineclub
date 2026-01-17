@@ -7,9 +7,10 @@
 
 <link rel="icon" type="image/png" href="Images/logo-cineclube.png">
 <link rel="preload" as="image" href="Images/logo-cineclube.png">
-<link rel="stylesheet" href="style.css">
-<script src="config.js"></script>
-<script src="cms-loader.js"></script>
+<link rel="preload" href="style.css" as="style" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="style.css"></noscript>
+<script src="config.js" defer></script>
+<script src="cms-loader.js" defer></script>
 </head>
 
 <body>
@@ -21,7 +22,7 @@
 <div class="container">
 
   <!-- COLUNA ESQUERDA -->
-  <main class="col-left">
+  <main class="col-left" data-prerender-target="sessions">
     <!-- Las sesiones se cargarán dinámicamente desde el CMS -->
     <p>Carregando sessões...</p>
   </main>

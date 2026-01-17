@@ -2,6 +2,42 @@
 
 const { API_URL, SITE_ID } = CMS_CONFIG;
 
+function hasPrerenderedSessions() {
+  const colLeft = document.querySelector('.col-left');
+  if (!colLeft) return false;
+  if (colLeft.querySelector('[data-prerendered="true"]')) return true;
+  if (colLeft.querySelector('.session')) return true;
+  return false;
+}
+
+function enhanceSessions() {
+  // After rendering, match heights for two-image layouts and offset 10px
+  try {
+    const containers = document.querySelectorAll('.imagem-sessao.imagem-sessao--two');
+    containers.forEach(container => {
+      const imgs = container.querySelectorAll('img.movie-img');
+      if (imgs.length !== 2) return;
+      const [img1] = imgs;
+
+      function applyHeightMatch() {
+        const h = img1.clientHeight || img1.naturalHeight || 0;
+        if (h > 0) {
+          container.style.setProperty('--hmatch', h + 'px');
+          container.classList.add('imagem-sessao--two-hmatch');
+        }
+      }
+
+      if (img1.complete && img1.naturalHeight > 0) {
+        requestAnimationFrame(applyHeightMatch);
+      } else {
+        img1.addEventListener('load', () => requestAnimationFrame(applyHeightMatch), { once: true });
+      }
+    });
+  } catch (err) {
+    console.warn('height-match logic failed', err);
+  }
+}
+
 // Función para obtener secciones
 async function getSections() {
   try {
@@ -24,7 +60,7 @@ async function getSections() {
 // Función para obtener posts de una sección
 async function getPosts(sectionId) {
   try {
-    const response = await fetch(`${API_URL}/posts?sectionId=${sectionId}&siteId=${SITE_ID}&page=1&limit=1000`, {
+    const response = await fetch(`${API_URL}/posts?sectionId=${sectionId}&siteId=${SITE_ID}&page=1&limit=1000&includeTags=false&includeSection=false`, {
       credentials: 'include',
       mode: 'cors',
       cache: 'no-store',
@@ -127,6 +163,12 @@ function renderSession(post, index) {
 // Función principal para cargar y renderizar sesiones
 async function loadSessions() {
   try {
+    if (hasPrerenderedSessions()) {
+      console.log('Sessions already prerendered, skipping fetch');
+      enhanceSessions();
+      return;
+    }
+
     console.log('Loading sessions from CMS...');
     
     // Obtener secciones
@@ -176,33 +218,8 @@ async function loadSessions() {
     if (colLeft) {
       colLeft.innerHTML = sessionsHTML;
     }
-    
-      // After rendering, match heights for two-image layouts and offset 10px
-      try {
-        const containers = document.querySelectorAll('.imagem-sessao.imagem-sessao--two');
-        containers.forEach(container => {
-          const imgs = container.querySelectorAll('img.movie-img');
-          if (imgs.length !== 2) return;
-          const [img1, img2] = imgs;
 
-          function applyHeightMatch() {
-            // Ensure first image has computed height
-            const h = img1.clientHeight || img1.naturalHeight || 0;
-            if (h > 0) {
-              container.style.setProperty('--hmatch', h + 'px');
-              container.classList.add('imagem-sessao--two-hmatch');
-            }
-          }
-
-          if (img1.complete && img1.naturalHeight > 0) {
-            requestAnimationFrame(applyHeightMatch);
-          } else {
-            img1.addEventListener('load', () => requestAnimationFrame(applyHeightMatch), { once: true });
-          }
-        });
-      } catch (err) {
-        console.warn('height-match logic failed', err);
-      }
+    enhanceSessions();
 
     console.log('Sessions rendered successfully');
   } catch (error) {

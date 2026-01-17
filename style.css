@@ -96,23 +96,26 @@ header {
     align-items: flex-start;
     display: flex;
     position: relative;
+    flex-wrap: nowrap;
 }
 
 /* First image defines the container's height */
 .imagem-sessao--two .movie-img:first-child {
-    flex: 0 0 calc(50% - 5px);
+    flex: 0 0 auto;
     height: auto;
     display: block;
     max-width: 100%;
+    width: auto;
 }
 
-/* Second image: same height as first, 10px to the right, allowed to overflow */
+/* Second image: match height of first, positioned to the right with overflow allowed */
 .imagem-sessao--two .movie-img:last-child {
-    flex: 0 0 calc(50% - 5px);
+    flex: 0 0 auto;
     height: auto;
     max-width: 100%;
+    width: auto;
     object-fit: cover;
-    z-index: 2147483648;
+    display: block;
 }
 
 /* Height-match mode using CSS variable set from JS */

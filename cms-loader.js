@@ -115,8 +115,9 @@ function renderSession(post, index) {
   const horarioText = textBlocks[0]?.content || post.metadata?.horario || '';
   const description = textBlocks[1]?.content || textBlocks[0]?.content || post.content || '';
   
-  // Buscar imágenes
-  const images = getBlocksByType(post.blocks, 'image');
+  // Buscar imágenes: permitir cualquier número, filtrar entradas vacías
+  const imagesRaw = getBlocksByType(post.blocks, 'image');
+  const images = imagesRaw.filter(img => img && img.content && String(img.content).trim());
 
   // Resolver URL de media: si la ruta es relativa, convertirla en absoluta
   function resolveMediaUrl(path) {
@@ -151,8 +152,17 @@ function renderSession(post, index) {
       
       ${images.length > 0 ? `
         <div class="${imgContainerClass}">
-          ${images.map(img => `
-            <img src="${resolveMediaUrl(img.content)}" alt="${img.metadata?.alt || post.title}" class="movie-img" onload="console.log('image loaded','${resolveMediaUrl(img.content)}', ${post.id})" onerror="console.error('image failed','${resolveMediaUrl(img.content)}', ${post.id})">
+          ${images.map((img, i) => `
+            <img
+              src="${resolveMediaUrl(img.content)}"
+              alt="${img.metadata?.alt || post.title}"
+              class="movie-img"
+              loading="${i === 0 ? 'eager' : 'lazy'}"
+              decoding="async"
+              fetchpriority="${i === 0 ? 'high' : 'auto'}"
+              onload="console.log('image loaded','${resolveMediaUrl(img.content)}', ${post.id})"
+              onerror="console.error('image failed','${resolveMediaUrl(img.content)}', ${post.id})"
+            >
           `).join('')}
         </div>
       ` : ''}

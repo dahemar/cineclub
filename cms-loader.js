@@ -163,6 +163,38 @@ function renderSession(post, index) {
 // Función principal para cargar y renderizar sesiones
 async function loadSessions() {
   try {
+    // First, try to load a static prerender fragment if it exists on the
+    // same origin (deployed to Vercel as /posts.html). This avoids calling
+    // the CMS on first paint and makes the page instant.
+    try {
+      const resp = await fetch('/posts.html', { cache: 'no-store' });
+      if (resp.ok) {
+        const text = await resp.text();
+        // Parse and extract body content if the file is a full HTML doc
+        let fragment = text;
+        try {
+          const dp = new DOMParser();
+          const doc = dp.parseFromString(text, 'text/html');
+          if (doc && doc.body && doc.body.innerHTML.trim()) {
+            fragment = doc.body.innerHTML;
+          }
+        } catch (e) {
+          // ignore parse errors and use raw text
+        }
+        if (/data-prerendered=\"true\"|class=\"session\"/.test(fragment)) {
+          const colLeft = document.querySelector('.col-left');
+          if (colLeft) {
+            colLeft.innerHTML = fragment;
+            console.log('Loaded static prerender from /posts.html');
+            enhanceSessions();
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.debug('No static prerender available at /posts.html', err);
+    }
+
     if (hasPrerenderedSessions()) {
       console.log('Sessions already prerendered, skipping fetch');
       enhanceSessions();

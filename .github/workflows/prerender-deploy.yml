@@ -1,21 +1,12 @@
-name: Prerender and Deploy to Pages
+name: Prerender and Deploy to Vercel
 
 on:
-  push:
-    branches:
-      - main
   repository_dispatch:
     types: [cms-content-updated]
   workflow_dispatch:  # Permite trigger manual para testing
 
-concurrency:
-  group: prerender-deploy-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   prerender-and-deploy:

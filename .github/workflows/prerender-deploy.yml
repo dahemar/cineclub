@@ -90,8 +90,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           echo "Deploying to Vercel (using VERCEL_TOKEN)"
-          # Deploy repo root to Vercel; relies on project being linked in Vercel dashboard
-          vercel --prod --token "$VERCEL_TOKEN" --confirm
+          # Deploy repo root to Vercel
+          vercel deploy --prod --token "$VERCEL_TOKEN" --yes
 
       - name: ✅ Deployment complete
         run: |

@@ -240,14 +240,26 @@ async function loadSessions() {
     const posts = sessions.map(session => {
       const detail = sessionsDetail[session.slug] || {};
 
-      // Build blocks: prefer detailed blocks, but prepend any primary images
+      // Build blocks: prefer detailed blocks, but prepend any images
       let blocks = Array.isArray(detail.blocks) ? detail.blocks.slice() : [];
 
-      if (Array.isArray(detail.primaryImages) && detail.primaryImages.length) {
-        const imageBlocks = detail.primaryImages.filter(Boolean).map(u => ({ type: 'image', content: u }));
-        blocks = imageBlocks.concat(blocks);
+      // Add image blocks from different sources (in priority order)
+      let imagesToAdd = [];
+      if (Array.isArray(detail.images) && detail.images.length) {
+        imagesToAdd = detail.images;
+      } else if (Array.isArray(detail.primaryImages) && detail.primaryImages.length) {
+        imagesToAdd = detail.primaryImages;
       } else if (session.image && String(session.image).trim()) {
-        blocks = [{ type: 'image', content: session.image }].concat(blocks);
+        imagesToAdd = [session.image];
+      }
+
+      if (imagesToAdd.length > 0) {
+        const imageBlocks = imagesToAdd.filter(Boolean).map(u => ({ type: 'image', content: u }));
+        // Only add images if blocks don't already have image blocks
+        const existingImageBlocks = blocks.filter(b => b?.type === 'image');
+        if (existingImageBlocks.length === 0) {
+          blocks = imageBlocks.concat(blocks);
+        }
       }
 
       const content = detail.description || detail.summary || detail.html || detail.content || '';
@@ -256,11 +268,11 @@ async function loadSessions() {
         id: session.slug,
         title: session.title || detail.title,
         slug: session.slug,
-        order: session.order,
+        order: detail.order ?? session.order ?? 0,
         content,
         blocks,
         metadata: detail.metadata || {},
-        image: session.image || (Array.isArray(detail.primaryImages) ? detail.primaryImages[0] : '') || '',
+        image: session.image || (Array.isArray(detail.images) ? detail.images[0] : '') || (Array.isArray(detail.primaryImages) ? detail.primaryImages[0] : '') || '',
         createdAt: detail.createdAt || new Date().toISOString()
       };
     });

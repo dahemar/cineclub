@@ -1,0 +1,79 @@
+name: Fetch Content from Supabase Storage
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [cms-content-updated]
+  schedule:
+    - cron: '*/30 * * * *'  # Every 30 minutes (optional fallback)
+
+concurrency:
+  group: fetch-supabase
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 📦 Fetch manifest from Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SITE_ID: ${{ secrets.CMS_SITE_ID || '3' }}
+        run: |
+          echo "🔍 Fetching manifest for site $SITE_ID..."
+          MANIFEST_URL="${SUPABASE_URL}/storage/v1/object/public/prerender/${SITE_ID}/manifest.json"
+          
+          curl -fsSL "$MANIFEST_URL" -o manifest.json || {
+            echo "❌ Failed to fetch manifest from $MANIFEST_URL"
+            exit 1
+          }
+          
+          echo "✅ Manifest fetched"
+          cat manifest.json | jq '.'
+
+      - name: 📄 Download artifacts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SITE_ID: ${{ secrets.CMS_SITE_ID || '3' }}
+        run: |
+          BOOTSTRAP_FILE=$(jq -r '.files[] | select(.name | startswith("posts_bootstrap")) | .name' manifest.json)
+          POSTS_FILE=$(jq -r '.files[] | select(.name | startswith("posts.")) | .name' manifest.json | head -n 1)
+          
+          echo "📥 Downloading $BOOTSTRAP_FILE..."
+          curl -fsSL "${SUPABASE_URL}/storage/v1/object/public/prerender/${SITE_ID}/${BOOTSTRAP_FILE}" -o posts_bootstrap.json
+          
+          if [ -n "$POSTS_FILE" ]; then
+            echo "📥 Downloading $POSTS_FILE..."
+            curl -fsSL "${SUPABASE_URL}/storage/v1/object/public/prerender/${SITE_ID}/${POSTS_FILE}" -o posts.html
+          fi
+          
+          echo "✅ Artifacts downloaded"
+          ls -lh posts_bootstrap.json posts.html 2>/dev/null || true
+
+      - name: 💾 Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if git diff --quiet -- posts_bootstrap.json posts.html 2>/dev/null; then
+            echo "ℹ️  No changes detected"
+            exit 0
+          fi
+          
+          git add posts_bootstrap.json posts.html 2>/dev/null || true
+          git commit -m "chore: sync content from Supabase Storage [skip ci]" || exit 0
+          git push
+
+      - name: 📋 Summary
+        run: |
+          echo "## ✅ Content Sync Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source**: Supabase Storage" >> $GITHUB_STEP_SUMMARY
+          echo "- **Site ID**: ${SITE_ID}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Updated**: posts_bootstrap.json, posts.html" >> $GITHUB_STEP_SUMMARY

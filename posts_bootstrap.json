@@ -1,0 +1,50 @@
+{
+  "landingSlides": [],
+  "releases": [],
+  "liveProjects": [
+    {
+      "slug": "test",
+      "title": "test",
+      "image": "",
+      "order": 0
+    },
+    {
+      "slug": "sessao-1-palestinian-untitled",
+      "title": "<em>Palestinian Women</em>, Jocelyne Saab<br><em>untitled part 1: everything &amp; nothing</em>, Jayce Salloum",
+      "image": "Images/palestinian-women-b-w-2.png",
+      "order": 0
+    },
+    {
+      "slug": "sessao-2-malqueridas",
+      "title": "<p><em>Malqueridas</em>, Tana Gilbert</p>",
+      "image": "Images/Malqueridas.png",
+      "order": 1
+    }
+  ],
+  "liveDetailMap": {
+    "test": {
+      "title": "test",
+      "video": null,
+      "primaryImages": null,
+      "secondaryImages": null
+    },
+    "sessao-1-palestinian-untitled": {
+      "title": "<em>Palestinian Women</em>, Jocelyne Saab<br><em>untitled part 1: everything &amp; nothing</em>, Jayce Salloum",
+      "video": null,
+      "primaryImages": null,
+      "secondaryImages": null
+    },
+    "sessao-2-malqueridas": {
+      "title": "<p><em>Malqueridas</em>, Tana Gilbert</p>",
+      "video": null,
+      "primaryImages": null,
+      "secondaryImages": null
+    }
+  },
+  "bioSections": [],
+  "contactLinks": [],
+  "_meta": {
+    "generatedAt": "2026-01-19T19:45:19.216Z",
+    "siteId": "3"
+  }
+}

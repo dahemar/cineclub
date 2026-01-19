@@ -3,6 +3,12 @@
   "releases": [],
   "liveProjects": [
     {
+      "slug": "test3",
+      "title": "test3",
+      "image": "",
+      "order": 0
+    },
+    {
       "slug": "test2",
       "title": "test2",
       "image": "",
@@ -28,6 +34,12 @@
     }
   ],
   "liveDetailMap": {
+    "test3": {
+      "title": "test3",
+      "video": null,
+      "primaryImages": null,
+      "secondaryImages": null
+    },
     "test2": {
       "title": "test2",
       "video": null,
@@ -56,7 +68,7 @@
   "bioSections": [],
   "contactLinks": [],
   "_meta": {
-    "generatedAt": "2026-01-19T19:59:11.874Z",
+    "generatedAt": "2026-01-19T20:11:39.567Z",
     "siteId": "3"
   }
 }

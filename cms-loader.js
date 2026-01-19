@@ -1,6 +1,55 @@
 // Cargador de datos del CMS para 1cineclube
 
 const { API_URL, SITE_ID } = CMS_CONFIG;
+const SUPABASE_BASE = 'https://xpprwxeptbcqehkfzedh.supabase.co/storage/v1/object/public/prerender';
+
+// Variable global para almacenar la versión actual
+let currentVersion = null;
+
+// Función para cargar contenido desde Supabase Storage
+async function loadFromSupabase() {
+  try {
+    // 1. Fetch manifest para obtener la versión actual y archivos
+    const manifestUrl = `${SUPABASE_BASE}/${SITE_ID}/manifest.json?_=${Date.now()}`;
+    const manifest = await fetch(manifestUrl).then(r => r.json());
+    
+    console.log('[Supabase] Manifest loaded:', manifest);
+    
+    // 2. Fetch el artefacto de bootstrap actual
+    const bootstrapFilename = manifest.filesMap?.['posts_bootstrap.json'] || manifest.files?.['posts_bootstrap.json'];
+    if (!bootstrapFilename) {
+      throw new Error('No posts_bootstrap.json found in manifest');
+    }
+    
+    const bootstrapUrl = `${SUPABASE_BASE}/${SITE_ID}/${bootstrapFilename}`;
+    const data = await fetch(bootstrapUrl).then(r => r.json());
+    
+    console.log('[Supabase] Bootstrap data loaded:', data);
+    currentVersion = manifest.version;
+    
+    return data;
+  } catch (err) {
+    console.error('[Supabase] Failed to load from Supabase:', err);
+    throw err;
+  }
+}
+
+// Polling automático para detectar cambios (opcional, cada 30s)
+function startAutoRefresh() {
+  setInterval(async () => {
+    try {
+      const manifestUrl = `${SUPABASE_BASE}/${SITE_ID}/manifest.json?_=${Date.now()}`;
+      const manifest = await fetch(manifestUrl).then(r => r.json());
+      
+      if (manifest.version !== currentVersion) {
+        console.log('[Supabase] New version detected, reloading...', manifest.version);
+        location.reload();
+      }
+    } catch (err) {
+      console.warn('[Supabase] Polling failed:', err);
+    }
+  }, 30000); // 30 segundos
+}
 
 function hasPrerenderedSessions() {
   const colLeft = document.querySelector('.col-left');
@@ -172,6 +221,74 @@ function renderSession(post, index) {
 
 // Función principal para cargar y renderizar sesiones
 async function loadSessions() {
+  try {
+    // Cargar desde Supabase Storage (source of truth)
+    console.log('[loadSessions] Loading from Supabase Storage...');
+    const data = await loadFromSupabase();
+    
+    // Extraer sesiones del bootstrap
+    const sessions = data.liveProjects || [];
+    const sessionsDetail = data.liveDetailMap || {};
+    
+    if (sessions.length === 0) {
+      console.warn('[loadSessions] No sessions found in bootstrap data');
+      document.querySelector('.col-left').innerHTML = '<p>Nenhuma sessão disponível.</p>';
+      return;
+    }
+    
+    // Construir objetos completos de sesiones combinando liveProjects + liveDetailMap
+    const posts = sessions.map(session => {
+      const detail = sessionsDetail[session.slug] || {};
+      return {
+        id: session.slug,
+        title: session.title || detail.title,
+        slug: session.slug,
+        order: session.order,
+        content: detail.description || '',
+        blocks: detail.blocks || [],
+        metadata: detail.metadata || {},
+        createdAt: detail.createdAt || new Date().toISOString()
+      };
+    });
+    
+    console.log('[loadSessions] Posts loaded from Supabase:', posts);
+    
+    // Ordenar por order descendente
+    const sortedPosts = posts.sort((a, b) => {
+      if (a.order !== undefined && b.order !== undefined) {
+        return b.order - a.order;
+      }
+      if (a.order !== undefined) return -1;
+      if (b.order !== undefined) return 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    
+    // Renderizar sesiones
+    const sessionsHTML = sortedPosts.map((post, index) => renderSession(post, index)).join('');
+    
+    // Insertar en el contenedor
+    const colLeft = document.querySelector('.col-left');
+    if (colLeft) {
+      colLeft.innerHTML = sessionsHTML;
+    }
+
+    enhanceSessions();
+
+    // Iniciar polling automático para detectar cambios
+    startAutoRefresh();
+
+    console.log('[loadSessions] Sessions rendered successfully from Supabase');
+  } catch (error) {
+    console.error('[loadSessions] Error loading sessions from Supabase:', error);
+    
+    // Fallback: intentar cargar desde API del CMS
+    console.log('[loadSessions] Falling back to CMS API...');
+    await loadSessionsFromAPI();
+  }
+}
+
+// Función fallback para cargar desde API del CMS (legacy)
+async function loadSessionsFromAPI() {
   try {
     // First, try to load a static prerender fragment if it exists on the
     // same origin (deployed to Vercel as /posts.html). This avoids calling

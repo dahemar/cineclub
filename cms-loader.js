@@ -239,14 +239,28 @@ async function loadSessions() {
     // Construir objetos completos de sesiones combinando liveProjects + liveDetailMap
     const posts = sessions.map(session => {
       const detail = sessionsDetail[session.slug] || {};
+
+      // Build blocks: prefer detailed blocks, but prepend any primary images
+      let blocks = Array.isArray(detail.blocks) ? detail.blocks.slice() : [];
+
+      if (Array.isArray(detail.primaryImages) && detail.primaryImages.length) {
+        const imageBlocks = detail.primaryImages.filter(Boolean).map(u => ({ type: 'image', content: u }));
+        blocks = imageBlocks.concat(blocks);
+      } else if (session.image && String(session.image).trim()) {
+        blocks = [{ type: 'image', content: session.image }].concat(blocks);
+      }
+
+      const content = detail.description || detail.summary || detail.html || detail.content || '';
+
       return {
         id: session.slug,
         title: session.title || detail.title,
         slug: session.slug,
         order: session.order,
-        content: detail.description || '',
-        blocks: detail.blocks || [],
+        content,
+        blocks,
         metadata: detail.metadata || {},
+        image: session.image || (Array.isArray(detail.primaryImages) ? detail.primaryImages[0] : '') || '',
         createdAt: detail.createdAt || new Date().toISOString()
       };
     });

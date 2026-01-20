@@ -17,15 +17,47 @@ async function loadFromSupabase() {
       throw new Error(`Prerender endpoint failed: ${prerenderResponse.status}`);
     }
     
-    const { version, url } = await prerenderResponse.json();
-    console.log('[Supabase] Prerender info:', { version, url });
-    
-    // Fetch directo del artifact (un solo round-trip adicional)
-    const data = await fetch(url).then(r => r.json());
-    
-    console.log('[Supabase] Bootstrap data loaded:', data);
+    const body = await prerenderResponse.json();
+    const version = body.version;
+    const urls = (body.urls) || {};
+    console.log('[Supabase] Prerender info:', { version, urls });
+
+    // If we have a minimal artifact, fetch it first for fast render
+    if (urls.min) {
+      try {
+        const minResp = await fetch(urls.min);
+        if (minResp.ok) {
+          const minData = await minResp.json();
+          // Set currentVersion optimistically
+          currentVersion = version;
+          // Kick off fetching full in background
+          if (urls.full) {
+            fetch(urls.full).then(r => r.json()).then(fullData => {
+              try {
+                // Re-render with full data
+                renderBootstrap(fullData, true);
+                currentVersion = version;
+              } catch (e) {
+                console.warn('[Supabase] Failed to apply full bootstrap', e);
+              }
+            }).catch(err => {
+              console.warn('[Supabase] Failed to fetch full artifact in background', err);
+            });
+          }
+          console.log('[Supabase] Min bootstrap loaded:', minData);
+          return minData;
+        }
+      } catch (err) {
+        console.warn('[Supabase] Failed to load min artifact, falling back to full', err);
+      }
+    }
+
+    // Otherwise, fetch the full artifact
+    const fullUrl = (urls.full) ? urls.full : (urls && urls.url) || null;
+    if (!fullUrl) throw new Error('No artifact URL available');
+    const data = await fetch(fullUrl).then(r => r.json());
     currentVersion = version;
-    
+    console.log('[Supabase] Full bootstrap loaded:', data);
     return data;
   } catch (err) {
     console.error('[Supabase] Failed to load from Supabase:', err);
@@ -226,85 +258,11 @@ async function loadSessions() {
     // Cargar desde Supabase Storage (source of truth)
     console.log('[loadSessions] Loading from Supabase Storage...');
     const data = await loadFromSupabase();
+
+    // Render initial bootstrap (could be minimal)
+    renderBootstrap(data, false);
     
-    // Extraer sesiones del bootstrap
-    const sessions = data.liveProjects || [];
-    const sessionsDetail = data.liveDetailMap || {};
-    
-    if (sessions.length === 0) {
-      console.warn('[loadSessions] No sessions found in bootstrap data');
-      document.querySelector('.col-left').innerHTML = '<p>Nenhuma sessão disponível.</p>';
-      return;
-    }
-    
-    // Construir objetos completos de sesiones combinando liveProjects + liveDetailMap
-    const posts = sessions.map(session => {
-      const detail = sessionsDetail[session.slug] || {};
-
-      // Build blocks: prefer detailed blocks, but prepend any images
-      let blocks = Array.isArray(detail.blocks) ? detail.blocks.slice() : [];
-
-      // Add image blocks from different sources (in priority order)
-      let imagesToAdd = [];
-      if (Array.isArray(detail.images) && detail.images.length) {
-        imagesToAdd = detail.images;
-      } else if (Array.isArray(detail.primaryImages) && detail.primaryImages.length) {
-        imagesToAdd = detail.primaryImages;
-      } else if (session.image && String(session.image).trim()) {
-        imagesToAdd = [session.image];
-      }
-
-      if (imagesToAdd.length > 0) {
-        const imageBlocks = imagesToAdd.filter(Boolean).map(u => ({ type: 'image', content: u }));
-        // Only add images if blocks don't already have image blocks
-        const existingImageBlocks = blocks.filter(b => b?.type === 'image');
-        if (existingImageBlocks.length === 0) {
-          blocks = imageBlocks.concat(blocks);
-        }
-      }
-
-      const content = detail.description || detail.summary || detail.html || detail.content || '';
-
-      return {
-        id: session.slug,
-        title: session.title || detail.title,
-        slug: session.slug,
-        order: detail.order ?? session.order ?? 0,
-        content,
-        blocks,
-        metadata: detail.metadata || {},
-        image: session.image || (Array.isArray(detail.images) ? detail.images[0] : '') || (Array.isArray(detail.primaryImages) ? detail.primaryImages[0] : '') || '',
-        createdAt: detail.createdAt || new Date().toISOString()
-      };
-    });
-    
-    console.log('[loadSessions] Posts loaded from Supabase:', posts);
-    
-    // Ordenar por order descendente
-    const sortedPosts = posts.sort((a, b) => {
-      if (a.order !== undefined && b.order !== undefined) {
-        return b.order - a.order;
-      }
-      if (a.order !== undefined) return -1;
-      if (b.order !== undefined) return 1;
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-    
-    // Renderizar sesiones
-    const sessionsHTML = sortedPosts.map((post, index) => renderSession(post, index)).join('');
-    
-    // Insertar en el contenedor
-    const colLeft = document.querySelector('.col-left');
-    if (colLeft) {
-      colLeft.innerHTML = sessionsHTML;
-    }
-
-    enhanceSessions();
-
-    // Iniciar polling automático para detectar cambios
-    startAutoRefresh();
-
-    console.log('[loadSessions] Sessions rendered successfully from Supabase');
+    return;
   } catch (error) {
     console.error('[loadSessions] Error loading sessions from Supabase:', error);
     
@@ -312,6 +270,75 @@ async function loadSessions() {
     console.log('[loadSessions] Falling back to CMS API...');
     await loadSessionsFromAPI();
   }
+}
+
+// Render bootstrap data into the page. If replace=true, re-render full content.
+function renderBootstrap(data, replace = false) {
+  const sessions = (data && data.liveProjects) || [];
+  const sessionsDetail = (data && data.liveDetailMap) || {};
+
+  if (sessions.length === 0) {
+    console.warn('[renderBootstrap] No sessions found in bootstrap data');
+    const colLeft = document.querySelector('.col-left');
+    if (colLeft && !replace) colLeft.innerHTML = '<p>Nenhuma sessão disponível.</p>';
+    return;
+  }
+
+  const posts = sessions.map(session => {
+    const detail = sessionsDetail[session.slug] || {};
+    let blocks = Array.isArray(detail.blocks) ? detail.blocks.slice() : [];
+
+    let imagesToAdd = [];
+    if (Array.isArray(detail.images) && detail.images.length) {
+      imagesToAdd = detail.images;
+    } else if (Array.isArray(detail.primaryImages) && detail.primaryImages.length) {
+      imagesToAdd = detail.primaryImages;
+    } else if (session.image && String(session.image).trim()) {
+      imagesToAdd = [session.image];
+    }
+
+    if (imagesToAdd.length > 0) {
+      const imageBlocks = imagesToAdd.filter(Boolean).map(u => ({ type: 'image', content: u }));
+      const existingImageBlocks = blocks.filter(b => b?.type === 'image');
+      if (existingImageBlocks.length === 0) {
+        blocks = imageBlocks.concat(blocks);
+      }
+    }
+
+    const content = detail.description || detail.summary || detail.html || detail.content || '';
+
+    return {
+      id: session.slug,
+      title: session.title || detail.title,
+      slug: session.slug,
+      order: detail.order ?? session.order ?? 0,
+      content,
+      blocks,
+      metadata: detail.metadata || {},
+      image: session.image || (Array.isArray(detail.images) ? detail.images[0] : '') || (Array.isArray(detail.primaryImages) ? detail.primaryImages[0] : '') || '',
+      createdAt: detail.createdAt || new Date().toISOString()
+    };
+  });
+
+  const sortedPosts = posts.sort((a, b) => {
+    if (a.order !== undefined && b.order !== undefined) return b.order - a.order;
+    if (a.order !== undefined) return -1;
+    if (b.order !== undefined) return 1;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  const sessionsHTML = sortedPosts.map((post, index) => renderSession(post, index)).join('');
+  const colLeft = document.querySelector('.col-left');
+  if (colLeft) {
+    colLeft.innerHTML = sessionsHTML;
+  }
+
+  enhanceSessions();
+
+  // Start auto-refresh polling if not already running
+  if (!replace) startAutoRefresh();
+
+  console.log('[renderBootstrap] Rendered bootstrap', { replace });
 }
 
 // Función fallback para cargar desde API del CMS (legacy)

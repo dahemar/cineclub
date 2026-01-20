@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>um cineclube</title>
+
+<link rel="icon" type="image/png" href="Images/logo-cineclube.png">
+<!-- DNS prefetch + preconnect para CDN -->
+<link rel="dns-prefetch" href="https://cms-woad-delta.vercel.app">
+<link rel="dns-prefetch" href="https://xpprwxeptbcqehkfzedh.supabase.co">
+<link rel="preconnect" href="https://xpprwxeptbcqehkfzedh.supabase.co" crossorigin>
+<!-- Preload critical assets -->
+<link rel="preload" as="image" href="Images/logo-cineclube.png">
+<!-- Preload manifest from CDN -->
+<link rel="preload" href="https://xpprwxeptbcqehkfzedh.supabase.co/storage/v1/object/public/prerender/3/manifest.json" as="fetch" crossorigin>
+<!-- CSS -->
+<link rel="stylesheet" href="style.css">
+<!-- Config inline para evitar roundtrip -->
+<script>
+  window.CMS_CONFIG = { API_URL: 'https://cms-woad-delta.vercel.app', SITE_ID: 3 };
+</script>
+<!-- Loader SIN defer: ejecutar inmediatamente para fetch temprano -->
+<script src="cms-loader.js"></script>
+</head>
+
+<body>
+
+<header>
+  <h1>1cineclube</h1>
+</header>
+
+<div class="container">
+
+  <!-- COLUNA ESQUERDA -->
+  <main class="col-left" data-prerender-target="sessions">
+    <!-- Content loaded by cms-loader.js -->
+  </main>
+
+  <!-- COLUNA DIREITA -->
+  <aside class="col-right">
+
+    <section class="descrip-sidebar">
+      <img src="Images/logo-cineclube.png" alt="logotipo do cineclube" width="90" height="90" decoding="async" fetchpriority="high">
+      <p>cineclube em lisboa <br>sessões de partilha</p>
+    </section>
+
+    <section class="contacto">
+      <p>contacto <br>1cineclube@gmail.com</p>
+    </section>
+
+    <section class="newsletter">
+      <p>newsletter 𓁹‿𓁹</p>
+
+<form
+  action="https://formspree.io/f/meeoobea"
+  method="POST"
+  data-form-redirect="success.html"
+>
+  <label>
+    <input type="email" name="email" placeholder="email" required>
+  </label>
+
+  <button type="submit">𝑠𝑢𝑏𝑠𝑐𝑟𝑒𝑣𝑒𝑟!</button>
+</form>
+
+    </section>
+
+  </aside>
+
+</div>
+
+</body>
+</html>

@@ -61,7 +61,13 @@ async function loadFromSupabase() {
           if (fullUrl) {
             fetch(fullUrl).then(r => r.json()).then(fullData => {
               try {
-                renderBootstrap(fullData, true);
+                // Don't replace if SSR is active and first post exists - preserve thumbnail optimization
+                const isSSR = window.SSR_ENABLED === true;
+                const colLeft = document.querySelector('.col-left');
+                const existingSSRPost = colLeft?.querySelector('[data-ssr="true"]');
+                const shouldReplace = !isSSR || !existingSSRPost;
+                
+                renderBootstrap(fullData, shouldReplace);
                 currentVersion = version;
               } catch (e) {
                 console.warn('[Supabase] Failed to apply full bootstrap', e);

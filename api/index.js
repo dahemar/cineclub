@@ -84,7 +84,7 @@ function renderFirstPost(data) {
   let description = '';
   try {
     const textBlocks = Array.isArray(detail.blocks) ? detail.blocks.filter(b => b?.type === 'text') : [];
-    horarioText = textBlocks[0]?.content || detail.metadata?.horario || '';
+    horarioText = detail.horario || textBlocks[0]?.content || detail.metadata?.horario || '';
     description = textBlocks[1]?.content || textBlocks[0]?.content || detail.description || '';
   } catch (e) {
     horarioText = detail.metadata?.horario || '';

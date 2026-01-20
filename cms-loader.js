@@ -2,39 +2,65 @@
 
 const { API_URL, SITE_ID } = CMS_CONFIG;
 const SUPABASE_BASE = 'https://xpprwxeptbcqehkfzedh.supabase.co/storage/v1/object/public/prerender';
-const PRERENDER_ENDPOINT = `${API_URL}/prerender/current/${SITE_ID}`;
+const MANIFEST_URL = `${SUPABASE_BASE}/${SITE_ID}/manifest.json`;
 
 // Variable global para almacenar la versión actual
 let currentVersion = null;
 
-// Función para cargar contenido desde Supabase Storage (optimizada: single fetch)
+// localStorage keys
+const LS_KEY_VERSION = `prerender_v_${SITE_ID}`;
+const LS_KEY_MIN = `prerender_min_${SITE_ID}`;
+
+// LocalStorage helpers
+function readCachedVersion() {
+  try { return localStorage.getItem(LS_KEY_VERSION); } catch (e) { return null; }
+}
+function readCachedMin() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY_MIN)); } catch (e) { return null; }
+}
+function saveCached(version, minData) {
+  try {
+    localStorage.setItem(LS_KEY_VERSION, version);
+    localStorage.setItem(LS_KEY_MIN, JSON.stringify(minData));
+  } catch (e) { /* ignore quota errors */ }
+}
+
+// Función para cargar contenido desde Supabase Storage (optimizada: manifest desde CDN)
 async function loadFromSupabase() {
   try {
-    // Nuevo enfoque: single request al endpoint que devuelve la URL del artifact
-    const prerenderResponse = await fetch(PRERENDER_ENDPOINT);
+    // Fetch manifest from CDN (faster than backend dynamic endpoint)
+    const manifestResp = await fetch(MANIFEST_URL);
     
-    if (!prerenderResponse.ok) {
-      throw new Error(`Prerender endpoint failed: ${prerenderResponse.status}`);
+    if (!manifestResp.ok) {
+      throw new Error(`Manifest fetch failed: ${manifestResp.status}`);
     }
     
-    const body = await prerenderResponse.json();
-    const version = body.version;
-    const urls = (body.urls) || {};
-    console.log('[Supabase] Prerender info:', { version, urls });
+    const manifest = await manifestResp.json();
+    const version = manifest.version;
+    const filesMap = manifest.filesMap || {};
+    
+    console.log('[Supabase] Manifest loaded:', { version, filesMap });
+
+    // Build artifact URLs from manifest
+    const minFile = filesMap['posts_bootstrap.min.json'];
+    const fullFile = filesMap['posts_bootstrap.json'];
+    
+    const minUrl = minFile ? `${SUPABASE_BASE}/${SITE_ID}/${minFile}` : null;
+    const fullUrl = fullFile ? `${SUPABASE_BASE}/${SITE_ID}/${fullFile}` : null;
 
     // If we have a minimal artifact, fetch it first for fast render
-    if (urls.min) {
+    if (minUrl) {
       try {
-        const minResp = await fetch(urls.min);
+        const minResp = await fetch(minUrl);
         if (minResp.ok) {
           const minData = await minResp.json();
-          // Set currentVersion optimistically
           currentVersion = version;
+          saveCached(version, minData);
+          
           // Kick off fetching full in background
-          if (urls.full) {
-            fetch(urls.full).then(r => r.json()).then(fullData => {
+          if (fullUrl) {
+            fetch(fullUrl).then(r => r.json()).then(fullData => {
               try {
-                // Re-render with full data
                 renderBootstrap(fullData, true);
                 currentVersion = version;
               } catch (e) {
@@ -53,8 +79,7 @@ async function loadFromSupabase() {
     }
 
     // Otherwise, fetch the full artifact
-    const fullUrl = (urls.full) ? urls.full : (urls && urls.url) || null;
-    if (!fullUrl) throw new Error('No artifact URL available');
+    if (!fullUrl) throw new Error('No artifact URL available in manifest');
     const data = await fetch(fullUrl).then(r => r.json());
     currentVersion = version;
     console.log('[Supabase] Full bootstrap loaded:', data);
@@ -69,9 +94,9 @@ async function loadFromSupabase() {
 function startAutoRefresh() {
   setInterval(async () => {
     try {
-      const prerenderResponse = await fetch(PRERENDER_ENDPOINT);
-      if (prerenderResponse.ok) {
-        const { version } = await prerenderResponse.json();
+      const manifestResp = await fetch(MANIFEST_URL);
+      if (manifestResp.ok) {
+        const { version } = await manifestResp.json();
         
         if (version !== currentVersion) {
           console.log('[Supabase] New version detected, reloading...', version);
@@ -258,21 +283,40 @@ function renderSession(post, index) {
 
 // Función principal para cargar y renderizar sesiones
 async function loadSessions() {
+  // Try warm cache first (localStorage) for instant render
+  const cachedVersion = readCachedVersion();
+  const cachedMin = readCachedMin();
+  
+  if (cachedMin && cachedMin.liveProjects && cachedMin.liveProjects.length > 0) {
+    console.log('[loadSessions] Rendering from localStorage cache (warm load)');
+    try {
+      renderBootstrap(cachedMin, false);
+      currentVersion = cachedVersion;
+    } catch (e) {
+      console.warn('[loadSessions] Failed to render cached data', e);
+    }
+  }
+  
+  // Then fetch from network to check for updates
   try {
-    // Cargar desde Supabase Storage (source of truth)
-    console.log('[loadSessions] Loading from Supabase Storage...');
+    console.log('[loadSessions] Loading from Supabase Storage (CDN manifest)...');
     const data = await loadFromSupabase();
 
     // Render initial bootstrap (could be minimal)
-    renderBootstrap(data, false);
+    // If we already rendered from cache and version matches, skip re-render
+    if (!cachedMin || cachedVersion !== currentVersion) {
+      renderBootstrap(data, true);
+    }
     
     return;
   } catch (error) {
     console.error('[loadSessions] Error loading sessions from Supabase:', error);
     
-    // Fallback: intentar cargar desde API del CMS
-    console.log('[loadSessions] Falling back to CMS API...');
-    await loadSessionsFromAPI();
+    // If cache failed and network failed, try fallback
+    if (!cachedMin) {
+      console.log('[loadSessions] Falling back to CMS API...');
+      await loadSessionsFromAPI();
+    }
   }
 }
 

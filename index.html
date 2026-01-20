@@ -12,7 +12,8 @@
 <link rel="preconnect" href="https://xpprwxeptbcqehkfzedh.supabase.co" crossorigin>
 <!-- Preload critical assets -->
 <link rel="preload" as="image" href="Images/logo-cineclube.png">
-<link rel="preload" href="https://cms-woad-delta.vercel.app/prerender/current/3" as="fetch" crossorigin>
+<!-- Preload manifest from CDN (faster than backend endpoint) -->
+<link rel="preload" href="https://xpprwxeptbcqehkfzedh.supabase.co/storage/v1/object/public/prerender/3/manifest.json" as="fetch" crossorigin>
 <!-- CSS crítico: cargar de forma normal para FCP rápido -->
 <link rel="stylesheet" href="style.css">
 <!-- Config inline para evitar roundtrip -->

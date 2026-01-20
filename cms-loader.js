@@ -2,30 +2,29 @@
 
 const { API_URL, SITE_ID } = CMS_CONFIG;
 const SUPABASE_BASE = 'https://xpprwxeptbcqehkfzedh.supabase.co/storage/v1/object/public/prerender';
+const PRERENDER_ENDPOINT = `${API_URL}/prerender/current/${SITE_ID}`;
 
 // Variable global para almacenar la versión actual
 let currentVersion = null;
 
-// Función para cargar contenido desde Supabase Storage
+// Función para cargar contenido desde Supabase Storage (optimizada: single fetch)
 async function loadFromSupabase() {
   try {
-    // 1. Fetch manifest para obtener la versión actual y archivos
-    const manifestUrl = `${SUPABASE_BASE}/${SITE_ID}/manifest.json?_=${Date.now()}`;
-    const manifest = await fetch(manifestUrl).then(r => r.json());
+    // Nuevo enfoque: single request al endpoint que devuelve la URL del artifact
+    const prerenderResponse = await fetch(PRERENDER_ENDPOINT);
     
-    console.log('[Supabase] Manifest loaded:', manifest);
-    
-    // 2. Fetch el artefacto de bootstrap actual
-    const bootstrapFilename = manifest.filesMap?.['posts_bootstrap.json'] || manifest.files?.['posts_bootstrap.json'];
-    if (!bootstrapFilename) {
-      throw new Error('No posts_bootstrap.json found in manifest');
+    if (!prerenderResponse.ok) {
+      throw new Error(`Prerender endpoint failed: ${prerenderResponse.status}`);
     }
     
-    const bootstrapUrl = `${SUPABASE_BASE}/${SITE_ID}/${bootstrapFilename}`;
-    const data = await fetch(bootstrapUrl).then(r => r.json());
+    const { version, url } = await prerenderResponse.json();
+    console.log('[Supabase] Prerender info:', { version, url });
+    
+    // Fetch directo del artifact (un solo round-trip adicional)
+    const data = await fetch(url).then(r => r.json());
     
     console.log('[Supabase] Bootstrap data loaded:', data);
-    currentVersion = manifest.version;
+    currentVersion = version;
     
     return data;
   } catch (err) {
@@ -34,16 +33,18 @@ async function loadFromSupabase() {
   }
 }
 
-// Polling automático para detectar cambios (opcional, cada 30s)
+// Polling automático para detectar cambios (cada 30s)
 function startAutoRefresh() {
   setInterval(async () => {
     try {
-      const manifestUrl = `${SUPABASE_BASE}/${SITE_ID}/manifest.json?_=${Date.now()}`;
-      const manifest = await fetch(manifestUrl).then(r => r.json());
-      
-      if (manifest.version !== currentVersion) {
-        console.log('[Supabase] New version detected, reloading...', manifest.version);
-        location.reload();
+      const prerenderResponse = await fetch(PRERENDER_ENDPOINT);
+      if (prerenderResponse.ok) {
+        const { version } = await prerenderResponse.json();
+        
+        if (version !== currentVersion) {
+          console.log('[Supabase] New version detected, reloading...', version);
+          location.reload();
+        }
       }
     } catch (err) {
       console.warn('[Supabase] Polling failed:', err);

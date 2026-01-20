@@ -396,6 +396,46 @@ function renderBootstrap(data, replace = false) {
     postsToRender = sortedPosts.filter(p => p.slug !== ssrSlug);
     console.log('[renderBootstrap] SSR first post detected, rendering remaining posts');
     console.log('[renderBootstrap] SSR post HTML preserved:', existingSSRPost.outerHTML.substring(0, 200));
+
+    // Patch the existing SSR DOM node with richer data when available (full artifact)
+    try {
+      const ssrData = sortedPosts.find(p => p.slug === ssrSlug);
+      if (ssrData) {
+        function resolveMediaUrl(path) {
+          if (!path) return '';
+          if (/^(https?:)?\/\//i.test(path)) return path;
+          if (path.startsWith('/')) return `${window.location.origin}${path}`;
+          return `${window.location.origin}/${path.replace(/^\/+/,'')}`;
+        }
+
+        const el = existingSSRPost;
+        // Update title
+        const titleEl = el.querySelector('.filme');
+        if (titleEl && ssrData.title) titleEl.innerHTML = ssrData.title;
+
+        // Update or insert description
+        const descEl = el.querySelector('.descricao');
+        if (ssrData.content && ssrData.content.trim()) {
+          if (descEl) {
+            descEl.innerHTML = ssrData.content;
+          } else if (titleEl) {
+            titleEl.insertAdjacentHTML('afterend', `<div class="descricao">${ssrData.content}</div>`);
+          }
+        } else if (descEl && !ssrData.content) {
+          descEl.remove();
+        }
+
+        // Update image source if a better candidate exists (prefer thumbnail)
+        const imgEl = el.querySelector('img.movie-img');
+        const imageCandidate = ssrData.imageThumb || ssrData.image || '';
+        if (imgEl && imageCandidate) {
+          const resolved = resolveMediaUrl(imageCandidate);
+          if (imgEl.getAttribute('src') !== resolved) imgEl.setAttribute('src', resolved);
+        }
+      }
+    } catch (err) {
+      console.warn('[renderBootstrap] Failed to patch SSR post DOM', err);
+    }
   }
   
   const sessionsHTML = postsToRender.map((post, index) => {

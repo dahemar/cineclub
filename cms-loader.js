@@ -446,18 +446,44 @@ function renderBootstrap(data, replace = false) {
     return renderSession(post, actualIndex);
   }).join('');
   
-  if (colLeft) {
-    if (replace || !existingSSRPost) {
-      // Full replace or no SSR content
-      console.log('[renderBootstrap] Full replace mode');
-      colLeft.innerHTML = sessionsHTML;
-    } else {
-      // Append remaining posts after SSR first post - PRESERVE SSR HTML
-      console.log('[renderBootstrap] Preserving SSR post, appending', postsToRender.length, 'remaining posts');
-      const ssrHTML = existingSSRPost.outerHTML;
-      colLeft.innerHTML = ssrHTML + sessionsHTML;
+    if (colLeft) {
+      if (replace || !existingSSRPost) {
+        // Full replace or no SSR content
+        console.log('[renderBootstrap] Full replace mode');
+        colLeft.innerHTML = sessionsHTML;
+      } else {
+        // Preserve existing SSR node and append remaining posts after it.
+        // This avoids duplicating the SSR post if sessionsHTML accidentally
+        // still contains it. Use insertAdjacentHTML to preserve any event
+        // handlers or attributes on the existing node and be defensive by
+        // filtering out any post that matches the SSR slug or title.
+        console.log('[renderBootstrap] Preserving SSR post, appending', postsToRender.length, 'remaining posts');
+
+        // Defensive filter: drop any post that appears to match the SSR node
+        const ssrSlug = existingSSRPost.getAttribute('data-slug');
+        const ssrTitle = existingSSRPost.querySelector('.filme')?.innerHTML?.trim();
+        postsToRender = postsToRender.filter(p => {
+          if (ssrSlug && p.slug === ssrSlug) return false;
+          if (ssrTitle && String(p.title || '').trim() === ssrTitle) return false;
+          return true;
+        });
+
+        const filteredHTML = postsToRender.map((post, index) => {
+          const actualIndex = (window.SSR_ENABLED === true && existingSSRPost && !replace) ? index + 1 : index;
+          return renderSession(post, actualIndex);
+        }).join('');
+
+        // Append remaining posts after the existing SSR node
+        try {
+          existingSSRPost.insertAdjacentHTML('afterend', filteredHTML);
+        } catch (err) {
+          // Fallback: if insertAdjacentHTML fails for any reason, replace safe
+          console.warn('[renderBootstrap] insertAdjacentHTML failed, falling back to innerHTML concat', err);
+          const ssrHTML = existingSSRPost.outerHTML;
+          colLeft.innerHTML = ssrHTML + filteredHTML;
+        }
+      }
     }
-  }
 
   enhanceSessions();
 
@@ -465,6 +491,29 @@ function renderBootstrap(data, replace = false) {
   if (!replace) startAutoRefresh();
 
   console.log('[renderBootstrap] Rendered bootstrap', { replace, ssr: isSSR, postsRendered: postsToRender.length });
+
+  // Defensive cleanup: ensure the first post does not contain duplicate
+  // fecha/horario elements (can happen if SSR markup and client render both
+  // include a `.horario`). Keep the first `.horario` only and normalize its
+  // inner text to avoid nested <p> tags or duplicated content.
+  try {
+    const firstSessionEl = colLeft?.querySelector('.session');
+    if (firstSessionEl) {
+      const horarioEls = Array.from(firstSessionEl.querySelectorAll('.horario'));
+      if (horarioEls.length > 1) {
+        // Remove duplicates, keep the first
+        horarioEls.slice(1).forEach(el => el.remove());
+      }
+      // Normalize remaining horario content to plain text (strip tags)
+      const remaining = firstSessionEl.querySelector('.horario');
+      if (remaining) {
+        const txt = String(remaining.textContent || '').replace(/\s+/g, ' ').trim();
+        if (txt) remaining.innerHTML = txt;
+      }
+    }
+  } catch (err) {
+    console.warn('[renderBootstrap] horario dedupe failed', err);
+  }
 }
 
 // Función fallback para cargar desde API del CMS (legacy)

@@ -260,7 +260,7 @@ function renderSession(post, index) {
   return `
     <section class="session">
       <p class="session-num">${sessionNum}</p>
-      ${horarioText ? `<p class="horario">${horarioText}</p>` : ''}
+      ${horarioText ? `<div class="horario">${horarioText}</div>` : ''}
       
       <h2 class="filme">${formattedTitle}</h2>
       
@@ -271,8 +271,8 @@ function renderSession(post, index) {
           ${images.map((img, i) => {
             // LCP optimization: primer imagen del primer post es LCP candidate
             const isLCP = isFirstPost && i === 0;
-            // Use thumbnail for LCP image if available (480px optimized)
-            const imgSrc = isLCP && post.imageThumb ? resolveMediaUrl(post.imageThumb) : resolveMediaUrl(img.content);
+            // Use the image URL from the block (thumbnails removed)
+            const imgSrc = resolveMediaUrl(img.content);
             return `
             <img
               src="${imgSrc}"
@@ -373,7 +373,8 @@ function renderBootstrap(data, replace = false) {
       blocks,
       metadata: detail.metadata || {},
       image: session.image || (Array.isArray(detail.images) ? detail.images[0] : '') || (Array.isArray(detail.primaryImages) ? detail.primaryImages[0] : '') || '',
-      imageThumb: session.imageThumb || detail.imageThumb || '', // Thumbnail URL for LCP optimization
+      // thumbnails removed: no imageThumb field
+      imageThumb: '',
       createdAt: detail.createdAt || new Date().toISOString()
     };
   });

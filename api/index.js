@@ -74,9 +74,9 @@ function renderFirstPost(data) {
     images = [firstSession.image];
   }
   
-  // Use thumbnail for first image if available
+  // Use first available image for LCP
   const firstImage = images[0] || '';
-  const firstImageThumb = firstSession.imageThumb || detail.imageThumb || firstImage;
+  const firstImageThumb = firstImage; // thumbnails removed
   
   const title = renderFormattedTitle(firstSession.title || detail.title || '');
   const description = detail.description || '';

@@ -14,8 +14,13 @@
 <link rel="preload" as="image" href="Images/logo-cineclube.png">
 <!-- Preload manifest from CDN (faster than backend endpoint) -->
 <link rel="preload" href="https://xpprwxeptbcqehkfzedh.supabase.co/storage/v1/object/public/prerender/3/manifest.json" as="fetch" crossorigin>
-<!-- CSS crítico: cargar de forma normal para FCP rápido -->
-<link rel="stylesheet" href="style.css">
+<!-- Critical CSS inline for instant FCP -->
+<style>
+h1{font-style:italic;text-decoration:underline}header{position:relative;display:block;margin:40px auto 0;padding:40px 20px 0;max-width:1200px}.container{display:flex;gap:60px;margin:40px auto 0;padding:100px 20px 0;max-width:1200px}.col-left{flex:3;overflow:visible;position:relative;z-index:2147483646}.col-right{flex:1}.session{max-width:700px;padding-bottom:50px;margin-bottom:60px;border-bottom:1px solid #000;content-visibility:auto;contain-intrinsic-size:1000px;position:relative;z-index:2147483647;overflow:visible}.session .filme{margin:1px 0 20px}.session p{margin:10px 0}.session .descricao{margin:10px 0}.session .descricao p{margin:15px 0}.session .descricao p:first-child{margin-top:0}.session .descricao p:last-child{margin-bottom:0}.imagem-sessao{display:flex;flex-direction:row;gap:10px;align-items:flex-start;flex-wrap:nowrap;overflow:visible;position:relative}.imagem-sessao--two{gap:10px;align-items:flex-start;display:flex;position:relative;flex-wrap:nowrap}.imagem-sessao--two .movie-img:first-child{flex:0 0 auto;height:auto;display:block;max-width:100%;width:auto}.imagem-sessao--two .movie-img:last-child{flex:0 0 auto;height:auto;max-width:100%;width:auto;object-fit:cover;display:block}
+</style>
+<!-- Defer rest of CSS -->
+<link rel="stylesheet" href="style.css" media="print" onload="this.media='all'; this.onload=null;">
+<noscript><link rel="stylesheet" href="style.css"></noscript>
 <!-- Config inline para evitar roundtrip -->
 <script>
   window.CMS_CONFIG = { API_URL: 'https://cms-woad-delta.vercel.app', SITE_ID: 3 };

@@ -265,9 +265,11 @@ function renderSession(post, index) {
           ${images.map((img, i) => {
             // LCP optimization: primer imagen del primer post es LCP candidate
             const isLCP = isFirstPost && i === 0;
+            // Use thumbnail for LCP image if available (480px optimized)
+            const imgSrc = isLCP && post.imageThumb ? resolveMediaUrl(post.imageThumb) : resolveMediaUrl(img.content);
             return `
             <img
-              src="${resolveMediaUrl(img.content)}"
+              src="${imgSrc}"
               alt="${img.metadata?.alt || post.title}"
               class="movie-img"
               loading="${isLCP ? 'eager' : 'lazy'}"
@@ -364,6 +366,7 @@ function renderBootstrap(data, replace = false) {
       blocks,
       metadata: detail.metadata || {},
       image: session.image || (Array.isArray(detail.images) ? detail.images[0] : '') || (Array.isArray(detail.primaryImages) ? detail.primaryImages[0] : '') || '',
+      imageThumb: session.imageThumb || detail.imageThumb || '', // Thumbnail URL for LCP optimization
       createdAt: detail.createdAt || new Date().toISOString()
     };
   });

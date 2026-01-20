@@ -51,7 +51,7 @@ function renderFirstPost(data) {
   const sessionsDetail = data?.liveDetailMap || {};
   
   if (sessions.length === 0) {
-    return '<p>Nenhuma sessão disponível.</p>';
+    return { html: '<p>Nenhuma sessão disponível.</p>', lcpImageUrl: '' };
   }
   
   // Get first post (highest order)
@@ -84,7 +84,7 @@ function renderFirstPost(data) {
   
   const imgContainerClass = images.length === 2 ? 'imagem-sessao imagem-sessao--two' : 'imagem-sessao';
   
-  return `
+  const html = `
     <section class="session" data-ssr="true" data-slug="${firstSession.slug}">
       <p class="session-num">${sessionNum}</p>
       <h2 class="filme">${title}</h2>
@@ -102,9 +102,14 @@ function renderFirstPost(data) {
         </div>
       ` : ''}
     </section>`;
+  
+  return { html, lcpImageUrl: firstImageThumb };
 }
 
-function generateHTML(firstPostHTML) {
+function generateHTML(firstPostHTML, lcpImageUrl = '') {
+  // Generate preload link for LCP image if available
+  const lcpPreload = lcpImageUrl ? `<link rel="preload" as="image" href="${lcpImageUrl}" fetchpriority="high">` : '';
+  
   return `<!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -119,6 +124,7 @@ function generateHTML(firstPostHTML) {
 <link rel="preconnect" href="https://xpprwxeptbcqehkfzedh.supabase.co" crossorigin>
 <!-- Preload critical assets -->
 <link rel="preload" as="image" href="Images/logo-cineclube.png">
+${lcpPreload}
 <!-- Preload manifest from CDN (faster than backend endpoint) -->
 <link rel="preload" href="https://xpprwxeptbcqehkfzedh.supabase.co/storage/v1/object/public/prerender/3/manifest.json" as="fetch" crossorigin>
 <!-- Critical CSS inline for instant FCP -->
@@ -193,11 +199,11 @@ export default async function handler(req, res) {
     const manifest = await fetchManifest();
     const minBootstrap = await fetchMinBootstrap(manifest);
     
-    // Render first post
-    const firstPostHTML = renderFirstPost(minBootstrap);
+    // Render first post (returns { html, lcpImageUrl })
+    const { html: firstPostHTML, lcpImageUrl } = renderFirstPost(minBootstrap);
     
-    // Generate complete HTML
-    const html = generateHTML(firstPostHTML);
+    // Generate complete HTML with LCP image preload
+    const html = generateHTML(firstPostHTML, lcpImageUrl);
     
     // Set cache headers (5s for SSR content)
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

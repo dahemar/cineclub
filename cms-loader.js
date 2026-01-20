@@ -226,7 +226,17 @@ function renderSession(post, index) {
   // Buscar bloques de texto - el primero puede ser el horario, el segundo la descripción
   const textBlocks = getBlocksByType(post.blocks, 'text');
   const horarioText = textBlocks[0]?.content || post.metadata?.horario || '';
-  const description = textBlocks[1]?.content || textBlocks[0]?.content || post.content || '';
+  let description = textBlocks[1]?.content || textBlocks[0]?.content || post.content || '';
+  
+  // Avoid duplicate: if description equals horario (text-only), drop description
+  try {
+    const stripTags = s => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    if (stripTags(description) && stripTags(horarioText) && stripTags(description) === stripTags(horarioText)) {
+      description = '';
+    }
+  } catch (e) {
+    // ignore
+  }
   
   // Buscar imágenes: permitir cualquier número, filtrar entradas vacías
   const imagesRaw = getBlocksByType(post.blocks, 'image');

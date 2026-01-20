@@ -223,20 +223,11 @@ function renderSession(post, index) {
   // Renderizar título formateado
   const formattedTitle = renderFormattedTitle(post);
   
-  // Buscar bloques de texto - el primero puede ser el horario, el segundo la descripción
+  // Buscar bloques de texto - el primero es el horario (arriba del título), el segundo la descripción (abajo)
   const textBlocks = getBlocksByType(post.blocks, 'text');
   const horarioText = textBlocks[0]?.content || post.metadata?.horario || '';
-  let description = textBlocks[1]?.content || textBlocks[0]?.content || post.content || '';
-  
-  // Avoid duplicate: if description equals horario (text-only), drop description
-  try {
-    const stripTags = s => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-    if (stripTags(description) && stripTags(horarioText) && stripTags(description) === stripTags(horarioText)) {
-      description = '';
-    }
-  } catch (e) {
-    // ignore
-  }
+  // Segundo bloque es descripción - sin fallback al primero para evitar duplicados
+  const description = textBlocks[1]?.content || post.content || '';
   
   // Buscar imágenes: permitir cualquier número, filtrar entradas vacías
   const imagesRaw = getBlocksByType(post.blocks, 'image');

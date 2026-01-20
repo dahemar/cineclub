@@ -90,6 +90,16 @@ function renderFirstPost(data) {
     horarioText = detail.metadata?.horario || '';
     description = detail.description || '';
   }
+
+  // Avoid duplicate: if description equals horario (text-only), drop description
+  try {
+    const stripTags = s => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    if (stripTags(description) && stripTags(horarioText) && stripTags(description) === stripTags(horarioText)) {
+      description = '';
+    }
+  } catch (e) {
+    // ignore
+  }
   const sessionNum = 'Sessão 1';
   
   const imgContainerClass = images.length === 2 ? 'imagem-sessao imagem-sessao--two' : 'imagem-sessao';

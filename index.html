@@ -6,13 +6,21 @@
   <title>um cineclube</title>
 
 <link rel="icon" type="image/png" href="Images/logo-cineclube.png">
+<!-- DNS prefetch + preconnect para CDN -->
+<link rel="dns-prefetch" href="https://cms-woad-delta.vercel.app">
+<link rel="dns-prefetch" href="https://xpprwxeptbcqehkfzedh.supabase.co">
+<link rel="preconnect" href="https://xpprwxeptbcqehkfzedh.supabase.co" crossorigin>
+<!-- Preload critical assets -->
 <link rel="preload" as="image" href="Images/logo-cineclube.png">
-<link rel="preload" href="style.css" as="style" onload="this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="style.css"></noscript>
-<!-- Preload critical CMS data endpoint -->
 <link rel="preload" href="https://cms-woad-delta.vercel.app/prerender/current/3" as="fetch" crossorigin>
-<script src="config.js" defer></script>
-<script src="cms-loader.js" defer></script>
+<!-- CSS crítico: cargar de forma normal para FCP rápido -->
+<link rel="stylesheet" href="style.css">
+<!-- Config inline para evitar roundtrip -->
+<script>
+  window.CMS_CONFIG = { API_URL: 'https://cms-woad-delta.vercel.app', SITE_ID: 3 };
+</script>
+<!-- Loader SIN defer: ejecutar inmediatamente para fetch temprano -->
+<script src="cms-loader.js"></script>
 </head>
 
 <body>

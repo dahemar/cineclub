@@ -200,6 +200,9 @@ function renderSession(post, index) {
   // Buscar imágenes: permitir cualquier número, filtrar entradas vacías
   const imagesRaw = getBlocksByType(post.blocks, 'image');
   const images = imagesRaw.filter(img => img && img.content && String(img.content).trim());
+  
+  // Determinar si este es el primer post (LCP candidate)
+  const isFirstPost = index === 0;
 
   // Resolver URL de media: si la ruta es relativa, convertirla en absoluta
   function resolveMediaUrl(path) {
@@ -234,18 +237,19 @@ function renderSession(post, index) {
       
       ${images.length > 0 ? `
         <div class="${imgContainerClass}">
-          ${images.map((img, i) => `
+          ${images.map((img, i) => {
+            // LCP optimization: primer imagen del primer post es LCP candidate
+            const isLCP = isFirstPost && i === 0;
+            return `
             <img
               src="${resolveMediaUrl(img.content)}"
               alt="${img.metadata?.alt || post.title}"
               class="movie-img"
-              loading="${i === 0 ? 'eager' : 'lazy'}"
-              decoding="async"
-              fetchpriority="${i === 0 ? 'high' : 'auto'}"
-              onload="console.log('image loaded','${resolveMediaUrl(img.content)}', ${post.id})"
-              onerror="console.error('image failed','${resolveMediaUrl(img.content)}', ${post.id})"
-            >
-          `).join('')}
+              loading="${isLCP ? 'eager' : 'lazy'}"
+              decoding="${isLCP ? 'sync' : 'async'}"
+              fetchpriority="${isLCP ? 'high' : 'auto'}"
+            >`;
+          }).join('')}
         </div>
       ` : ''}
     </section>
@@ -444,10 +448,7 @@ async function loadSessionsFromAPI() {
   }
 }
 
-// Cargar sesiones cuando el DOM esté listo
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', loadSessions);
-} else {
-  loadSessions();
-}
+// Ejecutar loadSessions inmediatamente (no esperar DOMContentLoaded)
+// El HTML ya tiene el contenedor .col-left, así que podemos renderizar de inmediato
+loadSessions();
 

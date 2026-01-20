@@ -79,7 +79,17 @@ function renderFirstPost(data) {
   const firstImageThumb = firstImage; // thumbnails removed
   
   const title = renderFormattedTitle(firstSession.title || detail.title || '');
-  const description = detail.description || '';
+  // Extract horario (date/time) and description from detail blocks if available
+  let horarioText = '';
+  let description = '';
+  try {
+    const textBlocks = Array.isArray(detail.blocks) ? detail.blocks.filter(b => b?.type === 'text') : [];
+    horarioText = textBlocks[0]?.content || detail.metadata?.horario || '';
+    description = textBlocks[1]?.content || textBlocks[0]?.content || detail.description || '';
+  } catch (e) {
+    horarioText = detail.metadata?.horario || '';
+    description = detail.description || '';
+  }
   const sessionNum = 'Sessão 1';
   
   const imgContainerClass = images.length === 2 ? 'imagem-sessao imagem-sessao--two' : 'imagem-sessao';
@@ -87,6 +97,7 @@ function renderFirstPost(data) {
   const html = `
     <section class="session" data-ssr="true" data-slug="${firstSession.slug}">
       <p class="session-num">${sessionNum}</p>
+      ${horarioText ? `<div class="horario">${horarioText}</div>` : ''}
       <h2 class="filme">${title}</h2>
       ${description ? `<div class="descricao">${description}</div>` : ''}
       ${firstImageThumb ? `

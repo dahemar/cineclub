@@ -391,10 +391,11 @@ function renderBootstrap(data, replace = false) {
   
   let postsToRender = sortedPosts;
   if (isSSR && existingSSRPost && !replace) {
-    // SSR first post exists, skip rendering it
+    // SSR first post exists, skip rendering it and preserve its HTML
     const ssrSlug = existingSSRPost.getAttribute('data-slug');
     postsToRender = sortedPosts.filter(p => p.slug !== ssrSlug);
     console.log('[renderBootstrap] SSR first post detected, rendering remaining posts');
+    console.log('[renderBootstrap] SSR post HTML preserved:', existingSSRPost.outerHTML.substring(0, 200));
   }
   
   const sessionsHTML = postsToRender.map((post, index) => {
@@ -406,10 +407,13 @@ function renderBootstrap(data, replace = false) {
   if (colLeft) {
     if (replace || !existingSSRPost) {
       // Full replace or no SSR content
+      console.log('[renderBootstrap] Full replace mode');
       colLeft.innerHTML = sessionsHTML;
     } else {
-      // Append remaining posts after SSR first post
-      colLeft.innerHTML = existingSSRPost.outerHTML + sessionsHTML;
+      // Append remaining posts after SSR first post - PRESERVE SSR HTML
+      console.log('[renderBootstrap] Preserving SSR post, appending', postsToRender.length, 'remaining posts');
+      const ssrHTML = existingSSRPost.outerHTML;
+      colLeft.innerHTML = ssrHTML + sessionsHTML;
     }
   }
 

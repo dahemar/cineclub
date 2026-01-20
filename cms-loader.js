@@ -378,10 +378,33 @@ function renderBootstrap(data, replace = false) {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
-  const sessionsHTML = sortedPosts.map((post, index) => renderSession(post, index)).join('');
+  // Check if SSR is enabled and first post is already rendered
+  const isSSR = window.SSR_ENABLED === true;
   const colLeft = document.querySelector('.col-left');
+  const existingSSRPost = colLeft?.querySelector('[data-ssr="true"]');
+  
+  let postsToRender = sortedPosts;
+  if (isSSR && existingSSRPost && !replace) {
+    // SSR first post exists, skip rendering it
+    const ssrSlug = existingSSRPost.getAttribute('data-slug');
+    postsToRender = sortedPosts.filter(p => p.slug !== ssrSlug);
+    console.log('[renderBootstrap] SSR first post detected, rendering remaining posts');
+  }
+  
+  const sessionsHTML = postsToRender.map((post, index) => {
+    // Adjust index if first post is SSR'd
+    const actualIndex = isSSR && existingSSRPost && !replace ? index + 1 : index;
+    return renderSession(post, actualIndex);
+  }).join('');
+  
   if (colLeft) {
-    colLeft.innerHTML = sessionsHTML;
+    if (replace || !existingSSRPost) {
+      // Full replace or no SSR content
+      colLeft.innerHTML = sessionsHTML;
+    } else {
+      // Append remaining posts after SSR first post
+      colLeft.innerHTML = existingSSRPost.outerHTML + sessionsHTML;
+    }
   }
 
   enhanceSessions();
@@ -389,7 +412,7 @@ function renderBootstrap(data, replace = false) {
   // Start auto-refresh polling if not already running
   if (!replace) startAutoRefresh();
 
-  console.log('[renderBootstrap] Rendered bootstrap', { replace });
+  console.log('[renderBootstrap] Rendered bootstrap', { replace, ssr: isSSR, postsRendered: postsToRender.length });
 }
 
 // Función fallback para cargar desde API del CMS (legacy)

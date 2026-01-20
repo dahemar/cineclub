@@ -1,0 +1,113 @@
+{
+  "url": "https://cineclub-theta.vercel.app",
+  "timestamp": "2026-01-20T13:54:40.945Z",
+  "runs": 6,
+  "cold": {
+    "fcp": {
+      "min": 256,
+      "max": 256,
+      "mean": 256,
+      "median": 256,
+      "p95": 256
+    },
+    "lcp": {
+      "min": 729,
+      "max": 729,
+      "mean": 729,
+      "median": 729,
+      "p95": 729
+    },
+    "tti": {
+      "min": 735,
+      "max": 735,
+      "mean": 735,
+      "median": 735,
+      "p95": 735
+    }
+  },
+  "warm": {
+    "fcp": {
+      "min": 243,
+      "max": 249,
+      "mean": 247,
+      "median": 248,
+      "p95": 249
+    },
+    "lcp": {
+      "min": 728,
+      "max": 817,
+      "mean": 760,
+      "median": 735,
+      "p95": 817
+    }
+  },
+  "all": {
+    "fcp": {
+      "min": 243,
+      "max": 256,
+      "mean": 249,
+      "median": 249,
+      "p95": 256
+    },
+    "lcp": {
+      "min": 728,
+      "max": 817,
+      "mean": 752,
+      "median": 735,
+      "p95": 817
+    },
+    "score": {
+      "min": 99,
+      "max": 100,
+      "mean": 100,
+      "median": 100,
+      "p95": 100
+    }
+  },
+  "detailedResults": [
+    {
+      "run": 3,
+      "type": "cold",
+      "fcp": 256,
+      "lcp": 729,
+      "tti": 735,
+      "si": 368,
+      "tbt": 0,
+      "cls": "0.050",
+      "score": 100
+    },
+    {
+      "run": 4,
+      "type": "warm",
+      "fcp": 249,
+      "lcp": 735,
+      "tti": 741,
+      "si": 424,
+      "tbt": 0,
+      "cls": "0.050",
+      "score": 99
+    },
+    {
+      "run": 5,
+      "type": "warm",
+      "fcp": 243,
+      "lcp": 728,
+      "tti": 734,
+      "si": 374,
+      "tbt": 0,
+      "cls": "0.050",
+      "score": 100
+    },
+    {
+      "run": 6,
+      "type": "warm",
+      "fcp": 248,
+      "lcp": 817,
+      "tti": 823,
+      "si": 539,
+      "tbt": 0,
+      "cls": "0.050",
+      "score": 99
+    }
+  ]
+}

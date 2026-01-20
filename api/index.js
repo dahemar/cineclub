@@ -98,6 +98,7 @@ function renderFirstPost(data) {
             loading="eager"
             decoding="sync"
             fetchpriority="high"
+            onload="if(!this.getAttribute('width')){this.setAttribute('width', this.naturalWidth); this.setAttribute('height', this.naturalHeight);}"
           >
         </div>
       ` : ''}

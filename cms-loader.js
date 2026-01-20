@@ -281,6 +281,7 @@ function renderSession(post, index) {
               loading="${isLCP ? 'eager' : 'lazy'}"
               decoding="${isLCP ? 'sync' : 'async'}"
               fetchpriority="${isLCP ? 'high' : 'auto'}"
+              onload="if(!this.getAttribute('width')){this.setAttribute('width', this.naturalWidth); this.setAttribute('height', this.naturalHeight);}"
             >`;
           }).join('')}
         </div>

@@ -5,9 +5,13 @@
  * Usage: node scripts/lighthouse-benchmark.js [url] [runs]
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const TARGET_URL = process.argv[2] || 'https://cineclub-theta.vercel.app';
 const NUM_RUNS = parseInt(process.argv[3]) || 10;
@@ -25,10 +29,11 @@ console.log(`📂 Output: ${OUTPUT_DIR}\n`);
 
 const results = [];
 
-for (let i = 1; i <= NUM_RUNS; i++) {
-  console.log(`\n⚡ Run ${i}/${NUM_RUNS}...`);
-  
-  try {
+async function runBenchmark() {
+  for (let i = 1; i <= NUM_RUNS; i++) {
+    console.log(`\n⚡ Run ${i}/${NUM_RUNS}...`);
+    
+    try:
     // Clear cache between runs for cold loads (runs 1-5)
     const clearCache = i <= Math.ceil(NUM_RUNS / 2);
     const cacheFlag = clearCache ? '' : '--disable-storage-reset';
@@ -166,3 +171,9 @@ console.log(`  Warm FCP p95: ${warmFCP.p95}ms ${warmFCP.p95 < TARGET_FCP ? '✅'
 console.log(`  Warm LCP p95: ${warmLCP.p95}ms ${warmLCP.p95 < TARGET_LCP ? '✅' : '❌'}`);
 
 console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+}
+
+runBenchmark().catch(err => {
+  console.error('Benchmark failed:', err);
+  process.exit(1);
+});

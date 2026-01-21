@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Um cineclube em Lisboa",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "lighthouse": "node scripts/lighthouse-benchmark.js"
   },
   "keywords": [
     "cinema",

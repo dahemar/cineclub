@@ -33,10 +33,10 @@ async function runBenchmark() {
   for (let i = 1; i <= NUM_RUNS; i++) {
     console.log(`\n⚡ Run ${i}/${NUM_RUNS}...`);
     
-    try:
-    // Clear cache between runs for cold loads (runs 1-5)
-    const clearCache = i <= Math.ceil(NUM_RUNS / 2);
-    const cacheFlag = clearCache ? '' : '--disable-storage-reset';
+    try {
+      // Clear cache between runs for cold loads (runs 1-5)
+      const clearCache = i <= Math.ceil(NUM_RUNS / 2);
+      const cacheFlag = clearCache ? '' : '--disable-storage-reset';
     
     const outputPath = path.join(OUTPUT_DIR, `run-${i}.json`);
     
